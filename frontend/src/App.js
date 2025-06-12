@@ -6,6 +6,7 @@ import Login from './components/Login';
 import CreateUser from './components/CreateUser';
 import UserList from './components/UserList';
 import Navigation from './components/Navigation';
+import TokenDisplay from './components/TokenDisplay';
 import { Box } from '@mui/material';
 
 const App = () => {
@@ -35,7 +36,7 @@ const App = () => {
         <Router>
             {isAuthenticated && <Navigation />}
             <Box sx={{ p: 3 }}>
-                <Routes>
+            <Routes>
                     <Route 
                         path="/" 
                         element={
@@ -68,7 +69,15 @@ const App = () => {
                             <Navigate to="/login" replace />
                         } 
                     />
-                </Routes>
+                    <Route 
+                        path="/token" 
+                        element={
+                            isAuthenticated ? 
+                            <TokenDisplay /> : 
+                            <Navigate to="/login" replace />
+                        } 
+                    />
+            </Routes>
             </Box>
         </Router>
     );

@@ -8,24 +8,29 @@ const Navigation = () => {
         <AppBar position="static">
             <Toolbar>
                 <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                    Agenda
+                    Gestor de Usuarios
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Button
-                        color="inherit"
-                        component={RouterLink}
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Button 
+                        color="inherit" 
+                        component={RouterLink} 
                         to="/users"
-                        sx={{ mr: 2 }}
                     >
                         Usuarios
                     </Button>
-                    <Button
-                        color="inherit"
-                        component={RouterLink}
+                    <Button 
+                        color="inherit" 
+                        component={RouterLink} 
                         to="/create-user"
-                        sx={{ mr: 2 }}
                     >
                         Crear Usuario
+                    </Button>
+                    <Button 
+                        color="inherit" 
+                        component={RouterLink} 
+                        to="/token"
+                    >
+                        Ver Token
                     </Button>
                     <LogoutButton />
                 </Box>

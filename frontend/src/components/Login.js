@@ -82,12 +82,12 @@ const Login = ({ onLogin }) => {
         e.preventDefault();
         setLoading(true);
         setError('');
-
+        
         try {
             const user = await Auth.signIn(username, password);
             console.log('Usuario autenticado:', user);
             onLogin(); // Notificar que el usuario ha iniciado sesión
-            navigate('/users');
+                navigate('/users');
         } catch (err) {
             console.error('Error de autenticación:', err);
             if (err.code === 'UserNotConfirmedException') {

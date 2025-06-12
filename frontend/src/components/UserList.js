@@ -17,9 +17,7 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
-const API_URL = 'https://qym7ixny0k.execute-api.us-east-1.amazonaws.com/dev';
-
-
+const API_URL = process.env.REACT_APP_API_URL;
 
 const UserList = () => {
     const [users, setUsers] = useState([]);
@@ -38,7 +36,7 @@ const UserList = () => {
 
             // Obtener la sesión actual
             const session = await Auth.currentSession();
-            const token = session.getIdToken().getJwtToken();
+            const token = session.getAccessToken().getJwtToken();
 
             // Configurar la petición exactamente como en Postman
             const config = {

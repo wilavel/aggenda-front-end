@@ -14,7 +14,7 @@ import {
     CircularProgress
 } from '@mui/material';
 
-const API_URL = 'https://qym7ixny0k.execute-api.us-east-1.amazonaws.com/dev';
+const API_URL = process.env.REACT_APP_API_URL;
 
 const CreateUser = () => {
     const [formData, setFormData] = useState({
@@ -78,7 +78,7 @@ const CreateUser = () => {
 
             // Obtener el token de la sesión actual
             const session = await Auth.currentSession();
-            const token = session.getIdToken().getJwtToken();
+            const token = session.getAccessToken().getJwtToken();
             console.log('Token obtenido:', token.substring(0, 20) + '...');
 
             // Preparar los datos como en Postman
