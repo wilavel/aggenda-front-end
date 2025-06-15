@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 
 const Login = ({ onLogin }) => {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -42,6 +42,42 @@ const Login = ({ onLogin }) => {
         checkAuth();
     }, [checkAuth]);
 
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+        
+        try {
+            const user = await Auth.signIn(email, password);
+            console.log('Usuario autenticado:', user);
+            
+            // Verificar si el usuario necesita cambiar su contraseña
+            if (user.challengeName === 'NEW_PASSWORD_REQUIRED') {
+                setUser(user);
+                setShowNewPasswordDialog(true);
+                return;
+            }
+            
+            onLogin(); // Notificar que el usuario ha iniciado sesión
+            navigate('/users');
+        } catch (err) {
+            console.error('Error de autenticación:', err);
+            if (err.code === 'UserNotConfirmedException') {
+                setError('Por favor, confirme su cuenta antes de iniciar sesión.');
+            } else if (err.code === 'NotAuthorizedException') {
+                setError('Email o contraseña incorrectos.');
+            } else if (err.code === 'UserNotFoundException') {
+                setError('Usuario no encontrado.');
+            } else if (err.code === 'PasswordResetRequiredException') {
+                setError('Se requiere restablecer la contraseña. Por favor, contacte al administrador.');
+            } else {
+                setError(err.message || 'Error al iniciar sesión');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleNewPasswordSubmit = async () => {
         if (newPassword !== confirmNewPassword) {
             setPasswordError('Las contraseñas no coinciden');
@@ -57,48 +93,18 @@ const Login = ({ onLogin }) => {
         setPasswordError('');
 
         try {
-            // Solo enviamos el atributo name, usando el username como valor por defecto
-            const attributes = {
-                name: user.username // Usamos el username como nombre por defecto
-            };
-
+            // No enviamos atributos adicionales al cambiar la contraseña
             const loggedUser = await Auth.completeNewPassword(
                 user,
-                newPassword,
-                attributes
+                newPassword
             );
             console.log('Contraseña actualizada:', loggedUser);
             setShowNewPasswordDialog(false);
+            onLogin(); // Notificar que el usuario ha iniciado sesión
             navigate('/users');
         } catch (err) {
             console.error('Error al actualizar contraseña:', err);
             setPasswordError(err.message || 'Error al actualizar la contraseña');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-        
-        try {
-            const user = await Auth.signIn(username, password);
-            console.log('Usuario autenticado:', user);
-            onLogin(); // Notificar que el usuario ha iniciado sesión
-                navigate('/users');
-        } catch (err) {
-            console.error('Error de autenticación:', err);
-            if (err.code === 'UserNotConfirmedException') {
-                setError('Por favor, confirme su cuenta antes de iniciar sesión.');
-            } else if (err.code === 'NotAuthorizedException') {
-                setError('Usuario o contraseña incorrectos.');
-            } else if (err.code === 'UserNotFoundException') {
-                setError('Usuario no encontrado.');
-            } else {
-                setError(err.message || 'Error al iniciar sesión');
-            }
         } finally {
             setLoading(false);
         }
@@ -128,13 +134,14 @@ const Login = ({ onLogin }) => {
                             margin="normal"
                             required
                             fullWidth
-                            id="username"
-                            label="Usuario"
-                            name="username"
-                            autoComplete="username"
+                            id="email"
+                            label="Email"
+                            name="email"
+                            type="email"
+                            autoComplete="email"
                             autoFocus
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             disabled={loading}
                         />
                         <TextField
@@ -199,16 +206,11 @@ const Login = ({ onLogin }) => {
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button 
-                        onClick={() => setShowNewPasswordDialog(false)} 
+                    <Button
+                        onClick={handleNewPasswordSubmit}
                         disabled={loading}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button 
-                        onClick={handleNewPasswordSubmit} 
                         variant="contained"
-                        disabled={loading}
+                        color="primary"
                     >
                         {loading ? 'Actualizando...' : 'Actualizar Contraseña'}
                     </Button>

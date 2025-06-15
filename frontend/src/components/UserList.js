@@ -26,19 +26,25 @@ const UserList = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetchUsers();
+        checkAuthAndFetchUsers();
     }, []);
 
-    const fetchUsers = async () => {
+    const checkAuthAndFetchUsers = async () => {
         try {
             setLoading(true);
             setError('');
+
+            // Verificar la autenticación primero
+            const user = await Auth.currentAuthenticatedUser();
+            if (!user) {
+                throw new Error('No hay usuario autenticado');
+            }
 
             // Obtener la sesión actual
             const session = await Auth.currentSession();
             const token = session.getAccessToken().getJwtToken();
 
-            // Configurar la petición exactamente como en Postman
+            // Configurar la petición
             const config = {
                 url: `${API_URL}/users`,
                 method: 'GET',
@@ -49,7 +55,6 @@ const UserList = () => {
                 }
             };
 
-          
             const response = await axios(config);
             console.log('Respuesta completa:', response);
             
@@ -60,7 +65,19 @@ const UserList = () => {
             }
         } catch (err) {
             console.error('Error completo:', err);
-            
+            if (err.message === 'No current user' || err.message === 'No hay usuario autenticado') {
+                setError('Sesión expirada. Redirigiendo al login...');
+                setTimeout(() => {
+                    navigate('/login');
+                }, 2000);
+            } else if (err.response?.status === 401) {
+                setError('Sesión expirada. Redirigiendo al login...');
+                setTimeout(() => {
+                    navigate('/login');
+                }, 2000);
+            } else {
+                setError(err.message || 'Error al cargar los usuarios');
+            }
         } finally {
             setLoading(false);
         }
