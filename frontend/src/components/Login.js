@@ -89,22 +89,37 @@ const Login = ({ onLogin }) => {
             return;
         }
 
+        if (!user) {
+            setPasswordError('Error: Sesión de usuario no válida');
+            return;
+        }
+
         setLoading(true);
         setPasswordError('');
 
         try {
-            // No enviamos atributos adicionales al cambiar la contraseña
+            // Obtener los atributos del usuario del objeto user
+            const userAttributes = user.attributes || {};
+            
             const loggedUser = await Auth.completeNewPassword(
                 user,
-                newPassword
+                newPassword,
+                {
+                    name: userAttributes.name || user.username
+                }
             );
+            
             console.log('Contraseña actualizada:', loggedUser);
             setShowNewPasswordDialog(false);
             onLogin(); // Notificar que el usuario ha iniciado sesión
             navigate('/users');
         } catch (err) {
             console.error('Error al actualizar contraseña:', err);
-            setPasswordError(err.message || 'Error al actualizar la contraseña');
+            if (err.code === 'InvalidParameterException') {
+                setPasswordError('La contraseña no cumple con los requisitos de seguridad');
+            } else {
+                setPasswordError(err.message || 'Error al actualizar la contraseña');
+            }
         } finally {
             setLoading(false);
         }

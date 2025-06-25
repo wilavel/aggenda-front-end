@@ -5,6 +5,7 @@ import './config/dev';
 import Login from './components/Login';
 import CreateUser from './components/CreateUser';
 import UserList from './components/UserList';
+import ClinicList from './components/ClinicList';
 import Navigation from './components/Navigation';
 import TokenDisplay from './components/TokenDisplay';
 import { Box } from '@mui/material';
@@ -66,6 +67,14 @@ const App = () => {
                         element={
                             isAuthenticated ? 
                             <UserList /> : 
+                            <Navigate to="/login" replace />
+                        } 
+                    />
+                    <Route 
+                        path="/clinics" 
+                        element={
+                            isAuthenticated ? 
+                            <ClinicList /> : 
                             <Navigate to="/login" replace />
                         } 
                     />

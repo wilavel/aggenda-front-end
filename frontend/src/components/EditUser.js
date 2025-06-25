@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
     Box,
@@ -26,39 +26,50 @@ const USER_GROUPS = [
     { value: 'Managers', label: 'Gerente' },
     { value: 'Clients', label: 'Paciente' }
 ];
-
 const DOCUMENT_TYPES = [
     { value: 'C.C', label: 'C.C' },
     { value: 'T.I', label: 'T.I' },
     { value: 'C.E', label: 'C.E' }
 ];
 
-const CreateUser = () => {
+const EditUser = () => {
     const [formData, setFormData] = useState({
-        email: '',
         name: '',
         phone: '',
         group: '',
         document_number: '',
         document_type: ''
     });
+    const [email, setEmail] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(true);
     const navigate = useNavigate();
+    const { id } = useParams();
 
     useEffect(() => {
-        const checkAuth = async () => {
+        const checkAuthAndLoadUser = async () => {
             try {
                 setCheckingAuth(true);
                 const session = await Auth.currentSession();
                 if (!session) {
                     throw new Error('No hay sesión activa');
                 }
-                console.log('Sesión válida encontrada');
+                // Cargar datos del usuario
+                const token = session.getAccessToken().getJwtToken();
+                const response = await axios.get(`${API_URL}/users/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                setFormData({
+                    name: response.data.name || '',
+                    phone: response.data.phone || '',
+                    group: response.data.group || '',
+                    document_number: response.data.document_number || '',
+                    document_type: response.data.document_type || ''
+                });
+                setEmail(response.data.email || '');
             } catch (err) {
-                console.error('Error de autenticación:', err);
                 setError('Por favor, inicie sesión para continuar');
                 setTimeout(() => {
                     navigate('/login');
@@ -67,8 +78,8 @@ const CreateUser = () => {
                 setCheckingAuth(false);
             }
         };
-        checkAuth();
-    }, [navigate]);
+        checkAuthAndLoadUser();
+    }, [navigate, id]);
 
     const handleChange = (e) => {
         setFormData({
@@ -85,86 +96,48 @@ const CreateUser = () => {
 
         try {
             // Validar campos requeridos
-            if (!formData.email || !formData.name || !formData.group || !formData.document_number || !formData.document_type) {
+            if (!formData.name || !formData.group || !formData.document_number || !formData.document_type) {
                 throw new Error('Por favor complete todos los campos requeridos');
-            }
-
-            // Validar formato de email
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(formData.email)) {
-                throw new Error('Por favor ingrese un email válido');
             }
 
             // Obtener el token de la sesión actual
             const session = await Auth.currentSession();
             const token = session.getAccessToken().getJwtToken();
-            console.log('Token obtenido:', token.substring(0, 20) + '...');
 
             // Preparar los datos
             const requestData = {
-                email: formData.email,
                 name: formData.name,
                 phone: formData.phone || '',
-                password: "UnaContraseñaSegura123!",
                 group: formData.group,
                 document_number: formData.document_number,
                 document_type: formData.document_type
             };
 
-            // Configurar la petición
-            const config = {
-                method: 'post',
-                url: `${API_URL}/users`,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                data: requestData
-            };
-
-            // Imprimir información detallada de la petición
-            console.log('Configuración de la petición:', config);
-            
-            // Realizar la petición con axios
-            const response = await axios(config);
-            
-            console.log('Respuesta del servidor:', response.data);
-            setSuccess('Usuario creado exitosamente');
-            setFormData({
-                email: '',
-                name: '',
-                phone: '',
-                group: '',
-                document_number: '',
-                document_type: ''
-            });
-            
+            // PUT para actualizar
+            const response = await axios.put(
+                `${API_URL}/users/${id}`,
+                requestData,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+            setSuccess('Usuario actualizado exitosamente');
             setTimeout(() => {
                 navigate('/users');
             }, 2000);
         } catch (err) {
-            console.error('Error detallado:', err);
-            console.error('Error completo:', {
-                message: err.message,
-                name: err.name,
-                stack: err.stack,
-                response: err.response,
-                request: err.request
-            });
-
             if (err.message === 'No current user') {
                 setError('Sesión expirada. Por favor, vuelva a iniciar sesión.');
                 setTimeout(() => {
                     navigate('/login');
                 }, 2000);
-            } else if (err.message === 'Network Error') {
-                setError('Error de conexión. Por favor, verifique que el servidor esté corriendo en ' + API_URL);
             } else if (err.response) {
-                // Error de la API
-                console.error('Error de la API:', err.response);
-                setError(err.response.data?.message || 'Error al crear el usuario');
+                setError(err.response.data?.message || 'Error al actualizar el usuario');
             } else {
-                setError(err.message || 'Error al crear el usuario');
+                setError(err.message || 'Error al actualizar el usuario');
             }
         } finally {
             setLoading(false);
@@ -203,7 +176,7 @@ const CreateUser = () => {
             >
                 <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
                     <Typography component="h1" variant="h5" align="center" gutterBottom>
-                        Crear Nuevo Usuario
+                        Editar Usuario
                     </Typography>
                     {error && (
                         <Alert severity="error" sx={{ mb: 2 }}>
@@ -219,16 +192,12 @@ const CreateUser = () => {
                         <Grid container spacing={2}>
                             <Grid item xs={12}>
                                 <TextField
-                                    required
                                     fullWidth
                                     id="email"
                                     label="Email"
                                     name="email"
-                                    type="email"
-                                    autoComplete="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    disabled={loading}
+                                    value={email}
+                                    disabled
                                 />
                             </Grid>
                             <Grid item xs={12}>
@@ -316,7 +285,7 @@ const CreateUser = () => {
                             sx={{ mt: 3, mb: 2 }}
                             disabled={loading}
                         >
-                            {loading ? 'Creando usuario...' : 'Crear Usuario'}
+                            {loading ? 'Actualizando usuario...' : 'Actualizar Usuario'}
                         </Button>
                     </Box>
                 </Paper>
@@ -325,4 +294,4 @@ const CreateUser = () => {
     );
 };
 
-export default CreateUser; 
+export default EditUser; 
