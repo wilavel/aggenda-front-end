@@ -56,11 +56,18 @@ const ClinicList = () => {
             const session = await Auth.currentSession();
             const token = session.getAccessToken().getJwtToken();
 
-            const response = await axios.get(`${API_URL}/clinics`, {
+            const config = {
+                url: `${API_URL}/clinics`,
+                method: 'GET',
+                timeout: 0,
                 headers: {
+                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 }
-            });
+            };
+
+            const response = await axios(config);
+            console.log('Respuesta completa:', response);
 
             // Ensure we're working with an array
             const clinicsData = Array.isArray(response.data) ? response.data : 

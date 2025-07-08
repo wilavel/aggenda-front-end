@@ -21,7 +21,7 @@ import {
 const API_URL = process.env.REACT_APP_API_URL;
 
 const USER_GROUPS = [
-    { value: 'Administrator', label: 'Administrador' },
+    { value: 'Administrators', label: 'Administrador' },
     { value: 'Doctors', label: 'Doctor' },
     { value: 'Managers', label: 'Gerente' },
     { value: 'Clients', label: 'Paciente' }

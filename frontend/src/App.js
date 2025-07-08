@@ -8,7 +8,10 @@ import UserList from './components/UserList';
 import ClinicList from './components/ClinicList';
 import Navigation from './components/Navigation';
 import TokenDisplay from './components/TokenDisplay';
+import HomePage from './components/HomePage';
+import ClientList from './components/ClientList';
 import { Box } from '@mui/material';
+import FloatingSocialButtons from './components/FloatingSocialButtons';
 
 const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,7 +38,9 @@ const App = () => {
 
     return (
         <Router>
-            {isAuthenticated && <Navigation />}
+            {isAuthenticated && <Navigation />
+            }
+            <FloatingSocialButtons />}
             <Box sx={{ p: 3 }}>
             <Routes>
                     <Route 
@@ -43,7 +48,7 @@ const App = () => {
                         element={
                             isAuthenticated ? 
                             <Navigate to="/users" replace /> : 
-                            <Navigate to="/login" replace />
+                            <HomePage />
                         } 
                     />
                     <Route 
@@ -86,6 +91,7 @@ const App = () => {
                             <Navigate to="/login" replace />
                         } 
                     />
+                    <Route path="/clientes" element={<ClientList />} />
             </Routes>
             </Box>
         </Router>
