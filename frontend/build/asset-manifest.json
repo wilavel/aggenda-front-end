@@ -1,0 +1,14 @@
+{
+  "files": {
+    "main.css": "/static/css/main.ac0a5f24.css",
+    "main.js": "/static/js/main.9216d04e.js",
+    "static/media/banner-central-dent.png": "/static/media/banner-central-dent.3d86788f049e23365643.png",
+    "index.html": "/index.html",
+    "main.ac0a5f24.css.map": "/static/css/main.ac0a5f24.css.map",
+    "main.9216d04e.js.map": "/static/js/main.9216d04e.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.ac0a5f24.css",
+    "static/js/main.9216d04e.js"
+  ]
+}

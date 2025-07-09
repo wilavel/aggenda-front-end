@@ -1,12 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import FooterUserForm from './FooterUserForm';
 // Logo local
 // eslint-disable-next-line import/no-webpack-loader-syntax
 // Si usas Vite, reemplaza require por import logo from '../assets/logo.png';
 
 
-const HomePage = () => (
-  <>
+const HomePage = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Cierra el menú móvil al hacer click en una opción
+  const handleMobileMenuClick = (sectionId) => {
+    setMobileMenuOpen(false);
+    const section = document.getElementById(sectionId);
+    if (section) section.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <> 
     {/* Header */}
     <header className="bg-white shadow-md">
       <div className="container mx-auto px-6 py-4">
@@ -54,33 +65,62 @@ const HomePage = () => (
               Iniciar Sesión
             </Link>
           </nav>
-          <button className="md:hidden">
+          {/* Botón menú móvil */}
+          <button
+            className="md:hidden focus:outline-none"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            aria-label="Abrir menú"
+          >
             <span className="material-icons text-gray-600">menu</span>
           </button>
         </div>
-      </div>
+        {/* Menú móvil dropdown */}
+        </div>
+      {mobileMenuOpen && (
+        <div className="md:hidden absolute left-0 right-0 mt-2 bg-white shadow-lg rounded-b-lg z-50 animate-fade-in-down">
+          <nav className="flex flex-col items-center space-y-4 py-4">
+            <a
+              className="text-gray-600 hover:text-blue-500 transition duration-300 cursor-pointer"
+              onClick={() => handleMobileMenuClick('inicio')}
+            >Inicio</a>
+            <a
+              className="text-gray-600 hover:text-blue-500 transition duration-300 cursor-pointer"
+              onClick={() => handleMobileMenuClick('servicios')}
+            >Servicios</a>
+            <a
+              className="text-gray-600 hover:text-blue-500 transition duration-300 cursor-pointer"
+              onClick={() => handleMobileMenuClick('nosotros')}
+            >Nosotros</a>
+            <a
+              className="text-gray-600 hover:text-blue-500 transition duration-300 cursor-pointer"
+              onClick={() => handleMobileMenuClick('blog')}
+            >Blog</a>
+            <a
+              className="text-gray-600 hover:text-blue-500 transition duration-300 cursor-pointer"
+              onClick={() => handleMobileMenuClick('contacto')}
+            >Contacto</a>
+            <Link
+              to="/login"
+              className="bg-secondary text-white font-bold py-2 px-6 rounded-full hover:bg-primary transition duration-300 font-sans shadow-lg w-10/12 text-center"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Iniciar Sesión
+            </Link>
+          </nav>
+        </div>
+      )}
     </header>
     <main>
       <div id="inicio"></div>
-      <section className="relative bg-light">
-        <div className="container mx-auto flex flex-col lg:flex-row items-center justify-between">
-          <div className="lg:w-1/2 p-6 lg:p-12 text-center lg:text-left">
-            <img alt="Central Dent Logo" className="mx-auto mb-8 h-64 w-auto" src={require('../assets/logo.png')} />
-            <p className="mt-4 text-xl font-sans text-primary">En Central Dent, nos dedicamos a cuidar tu salud bucal con la tecnología más avanzada y un equipo de especialistas apasionados.</p>
-            <div className="mt-8 flex justify-center lg:justify-start space-x-4">
-              <a className="bg-primary text-white font-bold py-3 px-8 rounded-full hover:bg-secondary transition duration-300 font-sans" href="#">Agendar Cita</a>
-              <a className="bg-light text-primary font-bold py-3 px-8 rounded-full hover:bg-secondary hover:text-white transition duration-300 font-sans" href="#">Ver Servicios</a>
-            </div>
-          </div>
-          <div className="lg:w-1/2 relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-white via-transparent to-transparent"></div>
-            <img alt="Grupo de amigos sonriendo en la playa" className="w-full h-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQIEFjATJ1hEW__XoiJuyZAywtSb5A3svQWyRE5eeGyyN40INA2fZY65TYQi88GMaHNnUnibttRkBCvzztYxLEQP89yhVt-G1evcRIn-b9MhQdh7VDi5YNDmIpthJ3Ad04A93rObJfQCYNfLg7uVaTFZA-cxfMc1CRzxKFHM0IT4JmM6op7HlXEuGZutAnR5jWTPSj4cTnfDNo0HKyp5WBvwWtxIG4eLXJBx13ya-B9V5sfawUIwNtQ_tqVXlFlHiZDFwrVrWxNpI" />
-            <div className="absolute bottom-0 right-0 bg-blue-600 text-white p-4 rounded-tl-lg">
-              <h2 className="text-xl font-semibold">ODONTOLOGÍA ESPECIALIZADA Y GENERAL</h2>
-            </div>
-          </div>
-        </div>
-      </section>
+      <section className="w-full">
+  <img
+    alt="Banner Central Dent - Niños y adultos sonriendo"
+    src={require('../assets/banner-central-dent.png')}
+    width={1066}
+    height={303}
+    className="mx-auto my-4 rounded-lg shadow-md"
+  />
+</section>
       <section className="py-16 bg-blue-50">
         <div className="container mx-auto px-6">
           <h2 id="servicios" className="text-3xl font-bold text-center text-blue-900 mb-12">Nuestros Servicios</h2>
@@ -157,7 +197,7 @@ const HomePage = () => (
                 <p className="text-gray-600 mb-4">Carrera 69 A # 4-11 sur</p>
                 <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden">
                   <iframe
-                    src="https://www.google.com/maps?q=Carrera+69+A+%23+4-11+sur,+Bogot%C3%A1,+Colombia&output=embed"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d994.2155034212853!2d-74.1295584!3d4.6186948999999995!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e3f9f41c1fd8b23%3A0x81cfec2bb468f7f7!2sCentralDent!5e0!3m2!1ses!2sus!4v1752070085336!5m2!1ses!2sus"
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
@@ -205,15 +245,10 @@ const HomePage = () => (
               <li><a className="text-blue-200 hover:text-white" href="#">Blog</a></li>
             </ul>
           </div>
+         
           <div>
             <h4 className="font-semibold text-lg mb-4">Contacto</h4>
-            <p className="text-blue-200">Carrera 69 A # 4-11 sur</p>
-            <p className="text-blue-200">contacto@centraldent.com</p>
-            <p className="text-blue-200">+57 3175954012</p>
-          </div>
-          <div>
-            <h4 className="font-semibold text-lg mb-4">Síguenos</h4>
-            <div className="flex space-x-4">
+            <div className="flex space-x-4 mb-4">
               <a className="text-blue-200 hover:text-white transition duration-300" href="#">
                 <i className="fab fa-facebook-f fa-lg"></i>
               </a>
@@ -227,14 +262,16 @@ const HomePage = () => (
                 <i className="fab fa-linkedin-in fa-lg"></i>
               </a>
             </div>
+            <FooterUserForm />
           </div>
         </div>
-        <div className="border-t border-blue-800 mt-8 pt-6 text-center text-blue-300 text-sm">
-          © 2024 Central Dent. Todos los derechos reservados.
-        </div>
+      </div>
+      <div className="border-t border-blue-800 mt-8 pt-6 text-center text-blue-300 text-sm">
+        2024 Central Dent. Todos los derechos reservados.
       </div>
     </footer>
-  </>
-);
+    </>
+  );
+}
 
 export default HomePage;
