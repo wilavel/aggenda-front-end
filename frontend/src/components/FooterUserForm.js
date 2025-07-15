@@ -8,8 +8,7 @@ const FooterUserForm = () => {
     name: '',
     email: '',
     phone: '',
-    document_number: '',
-    document_type: 'C.C',
+
     group: 'Clients', // Paciente por defecto
   });
   const [success, setSuccess] = useState('');
@@ -30,7 +29,7 @@ const FooterUserForm = () => {
     setError('');
     try {
       // Validar campos requeridos
-      if (!formData.name || !formData.email || !formData.document_number) {
+      if (!formData.name || !formData.email || !formData.phone) {
         throw new Error('Por favor complete todos los campos requeridos.');
       }
       // Validar email
@@ -39,14 +38,13 @@ const FooterUserForm = () => {
         throw new Error('Ingrese un email válido.');
       }
       // Enviar petición
-      await axios.post(`${API_URL}/users`, formData);
+      await axios.post(`${API_URL}/send-json-email`, formData);
       setSuccess('¡Usuario paciente creado exitosamente!');
       setFormData({
         name: '',
         email: '',
         phone: '',
-        document_number: '',
-        document_type: 'C.C',
+
         group: 'Clients',
       });
     } catch (err) {
@@ -57,8 +55,8 @@ const FooterUserForm = () => {
   };
 
   return (
-    <form className="mt-6 p-4 bg-blue-900 rounded-lg shadow-md" onSubmit={handleSubmit}>
-      <h5 className="text-white font-bold mb-2 text-center">Crea tu cuenta de paciente</h5>
+    <form className="p-4 bg-blue-900 rounded-lg shadow-md" onSubmit={handleSubmit}>
+      <h5 className="text-white font-bold mb-1">Si deseas mas información, déjanos tus datos de contacto y un agente se comunicará con tigo en el menor tiempo posible</h5>
       <div className="flex flex-col md:flex-row gap-2 mb-2">
         <input
           type="text"
@@ -66,7 +64,7 @@ const FooterUserForm = () => {
           value={formData.name}
           onChange={handleChange}
           placeholder="Nombre completo"
-          className="flex-1 px-2 py-1 rounded border border-blue-400 focus:outline-none"
+          className="flex-1 px-2 py-1 rounded border border-blue-400 focus:outline-none bg-white text-black placeholder-gray-400 shadow"
           required
         />
         <input
@@ -75,7 +73,7 @@ const FooterUserForm = () => {
           value={formData.email}
           onChange={handleChange}
           placeholder="Correo electrónico"
-          className="flex-1 px-2 py-1 rounded border border-blue-400 focus:outline-none"
+          className="flex-1 px-2 py-1 rounded border border-blue-400 focus:outline-none bg-white text-black placeholder-gray-400 shadow"
           required
         />
       </div>
@@ -85,35 +83,18 @@ const FooterUserForm = () => {
           name="phone"
           value={formData.phone}
           onChange={handleChange}
-          placeholder="Teléfono (opcional)"
-          className="flex-1 px-2 py-1 rounded border border-blue-400 focus:outline-none"
-        />
-        <input
-          type="text"
-          name="document_number"
-          value={formData.document_number}
-          onChange={handleChange}
-          placeholder="Número de documento"
-          className="flex-1 px-2 py-1 rounded border border-blue-400 focus:outline-none"
+          placeholder="Teléfono"
+          className="flex-1 px-2 py-1 rounded border border-blue-400 focus:outline-none bg-white text-black placeholder-gray-400 shadow"
           required
         />
-        <select
-          name="document_type"
-          value={formData.document_type}
-          onChange={handleChange}
-          className="flex-1 px-2 py-1 rounded border border-blue-400 focus:outline-none"
-        >
-          <option value="C.C">C.C</option>
-          <option value="T.I">T.I</option>
-          <option value="C.E">C.E</option>
-        </select>
+
       </div>
       <button
         type="submit"
         className="w-full mt-2 py-2 rounded bg-green-500 hover:bg-green-600 text-white font-bold transition"
         disabled={loading}
       >
-        {loading ? 'Creando...' : 'Crear Paciente'}
+        {loading ? 'Creando...' : 'Guardar registro'}
       </button>
       {success && <div className="text-green-300 text-center mt-2">{success}</div>}
       {error && <div className="text-red-300 text-center mt-2">{error}</div>}

@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import FooterUserForm from './FooterUserForm';
-// Logo local
-// eslint-disable-next-line import/no-webpack-loader-syntax
-// Si usas Vite, reemplaza require por import logo from '../assets/logo.png';
+import ServiceModal from './ServiceModal';
+import logo from '../assets/logo_footer.png';
+import odontologiaImg from '../assets/odontologia.jpg';
+import esteticaImg from '../assets/estetica.jpg';
+import ortodonciaImg from '../assets/ortodoncia.jpg';
+import odontopediatriaImg from '../assets/odontopediatria.jpg';
+import implantesImg from '../assets/implantes.jpg';
+import endodonciaImg from '../assets/endodoncia.jpg';
 
 
 const HomePage = () => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState({});
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Cierra el menú móvil al hacer click en una opción
@@ -125,36 +132,95 @@ const HomePage = () => {
         <div className="container mx-auto px-6">
           <h2 id="servicios" className="text-3xl font-bold text-center text-blue-900 mb-12">Nuestros Servicios</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition duration-300">
-              <span className="material-icons text-blue-500 text-5xl mb-4">health_and_safety</span>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Odontología General</h3>
-              <p className="text-gray-600">Desde limpiezas y revisiones hasta empastes y extracciones, mantenemos tu sonrisa saludable.</p>
-            </div>
-            <div className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition duration-300">
-              <span className="material-icons text-blue-500 text-5xl mb-4">auto_awesome</span>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Estética Dental</h3>
-              <p className="text-gray-600">Blanqueamientos, carillas y diseños de sonrisa para que luzcas radiante.</p>
-            </div>
-            <div className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition duration-300">
-              <span className="material-icons text-blue-500 text-5xl mb-4">tag_faces</span>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Ortodoncia</h3>
-              <p className="text-gray-600">Corrige la posición de tus dientes con brackets tradicionales o alineadores invisibles.</p>
-            </div>
-            <div className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition duration-300">
-              <span className="material-icons text-blue-500 text-5xl mb-4">child_friendly</span>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Odontopediatría</h3>
-              <p className="text-gray-600">Cuidado dental especializado para los más pequeños de la casa en un ambiente amigable.</p>
-            </div>
-            <div className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition duration-300">
-              <span className="material-icons text-blue-500 text-5xl mb-4">medication</span>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Implantes Dentales</h3>
-              <p className="text-gray-600">Recupera la función y estética de tus dientes perdidos con soluciones permanentes.</p>
-            </div>
-            <div className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition duration-300">
-              <span className="material-icons text-blue-500 text-5xl mb-4">healing</span>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">Endodoncia</h3>
-              <p className="text-gray-600">Tratamientos de conducto para salvar tus dientes y aliviar el dolor.</p>
-            </div>
+            <div className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition duration-300 cursor-pointer"
+  onClick={() => {
+    setModalContent({
+      title: 'Odontología General',
+      description: 'Ofrecemos atención integral en salud oral, prevención, diagnóstico y tratamientos para toda la familia. Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+      image: odontologiaImg
+    });
+    setModalOpen(true);
+  }}
+>
+  <span className="material-icons text-blue-500 text-5xl mb-4">health_and_safety</span>
+  <h3 className="text-xl font-semibold text-gray-800 mb-2">Odontología General</h3>
+  <p className="text-gray-600">Desde limpiezas y revisiones hasta empastes y extracciones, mantenemos tu sonrisa saludable.</p>
+</div>
+<div
+  className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition duration-300 cursor-pointer"
+  onClick={() => {
+    setModalContent({
+      title: 'Estética Dental',
+      description: 'Mejora tu sonrisa con nuestros tratamientos de estética dental: blanqueamiento, carillas y más. Lorem ipsum dolor sit amet, consectetur.',
+      image: esteticaImg
+    });
+    setModalOpen(true);
+  }}
+>
+  <span className="material-icons text-blue-500 text-5xl mb-4">auto_awesome</span>
+  <h3 className="text-xl font-semibold text-gray-800 mb-2">Estética Dental</h3>
+  <p className="text-gray-600">Blanqueamientos, carillas y diseños de sonrisa para que luzcas radiante.</p>
+</div>
+<div
+  className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition duration-300 cursor-pointer"
+  onClick={() => {
+    setModalContent({
+      title: 'Ortodoncia',
+      description: 'Corrige la posición de tus dientes con brackets tradicionales o alineadores invisibles. Tratamientos personalizados para todas las edades.',
+      image: ortodonciaImg
+    });
+    setModalOpen(true);
+  }}
+>
+  <span className="material-icons text-blue-500 text-5xl mb-4">tag_faces</span>
+  <h3 className="text-xl font-semibold text-gray-800 mb-2">Ortodoncia</h3>
+  <p className="text-gray-600">Corrige la posición de tus dientes con brackets tradicionales o alineadores invisibles.</p>
+</div>
+<div
+  className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition duration-300 cursor-pointer"
+  onClick={() => {
+    setModalContent({
+      title: 'Odontopediatría',
+      description: 'Cuidado dental especializado para los más pequeños de la casa en un ambiente amigable y divertido. Prevención y educación desde la infancia.',
+      image: odontopediatriaImg
+    });
+    setModalOpen(true);
+  }}
+>
+  <span className="material-icons text-blue-500 text-5xl mb-4">child_friendly</span>
+  <h3 className="text-xl font-semibold text-gray-800 mb-2">Odontopediatría</h3>
+  <p className="text-gray-600">Cuidado dental especializado para los más pequeños de la casa en un ambiente amigable.</p>
+</div>
+<div
+  className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition duration-300 cursor-pointer"
+  onClick={() => {
+    setModalContent({
+      title: 'Implantes Dentales',
+      description: 'Recupera la función y estética de tus dientes perdidos con soluciones permanentes y seguras. Implantes de alta calidad para una sonrisa natural.',
+      image: implantesImg
+    });
+    setModalOpen(true);
+  }}
+>
+  <span className="material-icons text-blue-500 text-5xl mb-4">medication</span>
+  <h3 className="text-xl font-semibold text-gray-800 mb-2">Implantes Dentales</h3>
+  <p className="text-gray-600">Recupera la función y estética de tus dientes perdidos con soluciones permanentes.</p>
+</div>
+<div
+  className="bg-white p-8 rounded-lg shadow-md text-center hover:shadow-xl transition duration-300 cursor-pointer"
+  onClick={() => {
+    setModalContent({
+      title: 'Endodoncia',
+      description: 'Tratamientos de conducto para salvar tus dientes y aliviar el dolor. Atención experta y tecnología avanzada para tu salud dental.',
+      image: endodonciaImg
+    });
+    setModalOpen(true);
+  }}
+>
+  <span className="material-icons text-blue-500 text-5xl mb-4">healing</span>
+  <h3 className="text-xl font-semibold text-gray-800 mb-2">Endodoncia</h3>
+  <p className="text-gray-600">Tratamientos de conducto para salvar tus dientes y aliviar el dolor.</p>
+</div>
           </div>
         </div>
       </section>
@@ -232,37 +298,66 @@ const HomePage = () => {
     </main>
     <footer className="bg-blue-900 text-white">
       <div className="container mx-auto px-6 py-12">
+        <ServiceModal 
+  open={modalOpen}
+  onClose={() => setModalOpen(false)}
+  title={modalContent.title}
+  description={modalContent.description}
+  image={modalContent.image}
+/>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <h4 className="font-semibold text-lg mb-4">Central Dent</h4>
-            <p className="text-blue-200">Tu mejor sonrisa es posible.</p>
-          </div>
+          <div className="flex flex-col items-start">
+  <img src={logo} alt="Central Dent Logo" className="h-16 mb-2" />
+ 
+  <p className="text-blue-200">"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+
+.</p>
+</div>
           <div>
             <h4 className="font-semibold text-lg mb-4">Explorar</h4>
             <ul className="space-y-2">
-              <li><a className="text-blue-200 hover:text-white" href="#">Servicios</a></li>
-              <li><a className="text-blue-200 hover:text-white" href="#">Nosotros</a></li>
-              <li><a className="text-blue-200 hover:text-white" href="#">Blog</a></li>
-            </ul>
+  <li>
+    <button
+      className="text-blue-200 hover:text-white transition w-full text-left"
+      onClick={() => {
+        setModalContent({
+          title: 'Odontología General',
+          description: 'Ofrecemos atención integral en salud oral, prevención, diagnóstico y tratamientos para toda la familia. Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+          image: odontologiaImg
+        });
+        setModalOpen(true);
+      }}
+      type="button"
+    >
+      Odontología General
+    </button>
+  </li>
+  <li>
+    <button
+      className="text-blue-200 hover:text-white transition w-full text-left"
+      onClick={() => {
+        setModalContent({
+          title: 'Estética Dental',
+          description: 'Mejora tu sonrisa con nuestros tratamientos de estética dental: blanqueamiento, carillas y más. Lorem ipsum dolor sit amet, consectetur.',
+          image: esteticaImg
+        });
+        setModalOpen(true);
+      }}
+      type="button"
+    >
+      Estética Dental
+    </button>
+  </li>
+  <li><a className="text-blue-200 hover:text-white" href="#">Blog</a></li>
+</ul>
           </div>
          
           <div>
             <h4 className="font-semibold text-lg mb-4">Contacto</h4>
             <div className="flex space-x-4 mb-4">
-              <a className="text-blue-200 hover:text-white transition duration-300" href="#">
-                <i className="fab fa-facebook-f fa-lg"></i>
-              </a>
-              <a className="text-blue-200 hover:text-white transition duration-300" href="#">
-                <i className="fab fa-instagram fa-lg"></i>
-              </a>
-              <a className="text-blue-200 hover:text-white transition duration-300" href="#">
-                <i className="fab fa-twitter fa-lg"></i>
-              </a>
-              <a className="text-blue-200 hover:text-white transition duration-300" href="#">
-                <i className="fab fa-linkedin-in fa-lg"></i>
-              </a>
-            </div>
             <FooterUserForm />
+            </div>
+           
           </div>
         </div>
       </div>

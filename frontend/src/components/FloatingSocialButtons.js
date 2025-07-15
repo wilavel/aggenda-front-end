@@ -3,13 +3,13 @@ import { FaWhatsapp, FaLinkedin } from 'react-icons/fa';
 
 const socialLinks = [
   {
-    href: 'https://facebook.com/',
+    href: 'https://www.facebook.com/centraldent.xavier.amazo.dominguez.od',
     icon: 'facebook',
     label: 'Facebook',
     color: 'bg-blue-600 hover:bg-blue-700',
   },
   {
-    href: 'https://instagram.com/',
+    href: 'https://www.instagram.com/central__dent/',
     icon: 'instagram',
     label: 'Instagram',
     color: 'bg-gradient-to-tr from-pink-500 via-red-500 to-yellow-500 hover:from-pink-600',
@@ -20,12 +20,7 @@ const socialLinks = [
     label: 'WhatsApp',
     color: 'bg-green-500 hover:bg-green-600',
   },
-  {
-    href: 'https://linkedin.com/',
-    icon: 'linkedin',
-    label: 'LinkedIn',
-    color: 'bg-blue-800 hover:bg-blue-900',
-  },
+  
 ];
 
 const iconMap = {
