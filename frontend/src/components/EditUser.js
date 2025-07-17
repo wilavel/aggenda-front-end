@@ -15,8 +15,12 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem
+    MenuItem,
+    FormGroup,
+    FormControlLabel,
+    Checkbox
 } from '@mui/material';
+import useFetchClinics from '../hooks/useFetchClinics';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -32,13 +36,17 @@ const DOCUMENT_TYPES = [
     { value: 'C.E', label: 'C.E' }
 ];
 
-const EditUser = () => {
+const EditUser = ({ id: propId, onClose }) => {
+    const id = propId;
+   
+   
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
         group: '',
         document_number: '',
-        document_type: ''
+        document_type: '',
+        clinics: [] // ids de clínicas seleccionadas
     });
     const [email, setEmail] = useState('');
     const [error, setError] = useState('');
@@ -46,11 +54,12 @@ const EditUser = () => {
     const [loading, setLoading] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(true);
     const navigate = useNavigate();
-    const { id } = useParams();
+   
 
     useEffect(() => {
         const checkAuthAndLoadUser = async () => {
             try {
+                console.log('Cargando datos del usuario...' + id);
                 setCheckingAuth(true);
                 const session = await Auth.currentSession();
                 if (!session) {
@@ -61,16 +70,19 @@ const EditUser = () => {
                 const response = await axios.get(`${API_URL}/users/${id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                console.log('Datos del usuario:', response.data);
                 setFormData({
                     name: response.data.name || '',
                     phone: response.data.phone || '',
                     group: response.data.group || '',
                     document_number: response.data.document_number || '',
-                    document_type: response.data.document_type || ''
+                    document_type: response.data.document_type || '',
+                    clinics: Array.isArray(response.data.clinics) ? response.data.clinics.map(String) : []
                 });
                 setEmail(response.data.email || '');
             } catch (err) {
-                setError('Por favor, inicie sesión para continuar');
+                console.log('Error al cargar datos del usuario:', err);
+                setError('Por favor, inicie sesión para continuar xxxx');
                 setTimeout(() => {
                     navigate('/login');
                 }, 2000);
@@ -87,6 +99,16 @@ const EditUser = () => {
             [e.target.name]: e.target.value
         });
     };
+
+    // Para el selector múltiple de clínicas
+    const handleClinicsChange = (e) => {
+        setFormData({
+            ...formData,
+            clinics: e.target.value
+        });
+    };
+
+    const { clinics: clinicsList, loading: loadingClinics, error: errorClinics } = useFetchClinics();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -110,7 +132,8 @@ const EditUser = () => {
                 phone: formData.phone || '',
                 group: formData.group,
                 document_number: formData.document_number,
-                document_type: formData.document_type
+                document_type: formData.document_type,
+                clinics: formData.group === 'Doctors' ? formData.clinics.map(String) : []
             };
 
             // PUT para actualizar
@@ -125,9 +148,7 @@ const EditUser = () => {
                 }
             );
             setSuccess('Usuario actualizado exitosamente');
-            setTimeout(() => {
-                navigate('/users');
-            }, 2000);
+            if (onClose) onClose();
         } catch (err) {
             if (err.message === 'No current user') {
                 setError('Sesión expirada. Por favor, vuelva a iniciar sesión.');
@@ -245,6 +266,45 @@ const EditUser = () => {
                                     </Select>
                                 </FormControl>
                             </Grid>
+                            {formData.group === 'Doctors' && (
+                                <Grid item xs={12}>
+                                    <FormControl component="fieldset" fullWidth required>
+                                        <label style={{marginBottom: 8, fontWeight: 500}}>Clínicas</label>
+                                        <FormGroup row>
+                                            {loadingClinics ? (
+                                                <span style={{marginLeft: 8}}>Cargando clínicas...</span>
+                                            ) : errorClinics ? (
+                                                <span style={{marginLeft: 8, color: 'red'}}>Error al cargar clínicas</span>
+                                            ) : clinicsList.length === 0 ? (
+                                                <span style={{marginLeft: 8}}>No hay clínicas registradas</span>
+                                            ) : (
+                                                clinicsList.map((clinic) => (
+                                                    <FormControlLabel
+                                                        key={clinic.id}
+                                                        control={
+                                                            <Checkbox
+                                                                checked={formData.clinics.includes(clinic.id)}
+                                                                onChange={e => {
+                                                                    const checked = e.target.checked;
+                                                                    setFormData(prev => ({
+                                                                        ...prev,
+                                                                        clinics: checked
+                                                                            ? [...prev.clinics, clinic.id]
+                                                                            : prev.clinics.filter(id => id !== clinic.id)
+                                                                    }));
+                                                                }}
+                                                                name={clinic.name}
+                                                                color="primary"
+                                                            />
+                                                        }
+                                                        label={clinic.name}
+                                                    />
+                                                ))
+                                            )}
+                                        </FormGroup>
+                                    </FormControl>
+                                </Grid>
+                            )}
                             <Grid item xs={12}>
                                 <TextField
                                     required

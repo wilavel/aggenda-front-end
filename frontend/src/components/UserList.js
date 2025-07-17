@@ -15,24 +15,16 @@ import {
     Alert,
     Box,
     IconButton,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
-    TextField
+    Dialog
+    
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
+import EditUser from './EditUser';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-const DOCUMENT_TYPES = [
-    { value: 'C.C', label: 'C.C' },
-    { value: 'T.I', label: 'T.I' },
-    { value: 'C.E', label: 'C.E' }
-];
 
 const UserList = () => {
     const [users, setUsers] = useState([]);
@@ -108,14 +100,9 @@ const UserList = () => {
     };
 
     const handleEditClick = (user) => {
+        console.log("Usuario seleccionado:", user);
         setSelectedUser(user);
-        setEditFormData({
-            name: user.name,
-            email: user.email,
-            phone: user.phone || '',
-            document_number: user.document_number || '',
-            document_type: user.document_type || ''
-        });
+        console.log("Usuario seleccionado:", selectedUser);
         setEditDialogOpen(true);
     };
 
@@ -139,26 +126,7 @@ const UserList = () => {
         }
     };
 
-    const handleEditSubmit = async () => {
-        try {
-            const session = await Auth.currentSession();
-            const token = session.getAccessToken().getJwtToken();
-
-            await axios.put(`${API_URL}/users/${selectedUser.id}`, editFormData, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            setUsers(users.map(user => 
-                user.id === selectedUser.id ? { ...user, ...editFormData } : user
-            ));
-            setEditDialogOpen(false);
-        } catch (err) {
-            console.error('Error al actualizar usuario:', err);
-            setError('Error al actualizar el usuario');
-        }
-    };
+   
 
     if (loading) {
         return (
@@ -181,6 +149,17 @@ const UserList = () => {
                     {error}
                 </Alert>
             )}
+            <Dialog open={editDialogOpen} onClose={() => {
+                setEditDialogOpen(false);
+                checkAuthAndFetchUsers();
+            }} maxWidth="md" fullWidth>
+                {selectedUser && (
+                  <EditUser id={selectedUser.id} onClose={() => {
+                    setEditDialogOpen(false);
+                    checkAuthAndFetchUsers();
+                  }} />
+                )}
+            </Dialog>
 
             <TableContainer component={Paper}>
                 <Table>
@@ -229,65 +208,9 @@ const UserList = () => {
                 </Table>
             </TableContainer>
 
-            <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}>
-                <DialogTitle>Editar Usuario</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        margin="normal"
-                        fullWidth
-                        label="Nombre"
-                        name="name"
-                        value={editFormData.name}
-                        onChange={e => setEditFormData({ ...editFormData, name: e.target.value })}
-                    />
-                    <TextField
-                        margin="normal"
-                        fullWidth
-                        label="Email"
-                        name="email"
-                        value={editFormData.email}
-                        disabled
-                    />
-                    <TextField
-                        margin="normal"
-                        fullWidth
-                        label="Teléfono"
-                        name="phone"
-                        value={editFormData.phone}
-                        onChange={e => setEditFormData({ ...editFormData, phone: e.target.value })}
-                    />
-                    <TextField
-                        margin="normal"
-                        fullWidth
-                        label="Número de Documento"
-                        name="document_number"
-                        value={editFormData.document_number}
-                        onChange={e => setEditFormData({ ...editFormData, document_number: e.target.value })}
-                    />
-                    <Box sx={{ mt: 2 }}>
-                        <label>Tipo de Documento</label>
-                        <select
-                            name="document_type"
-                            value={editFormData.document_type}
-                            onChange={e => setEditFormData({ ...editFormData, document_type: e.target.value })}
-                            style={{ width: '100%', padding: '8px', marginTop: '8px' }}
-                        >
-                            <option value="">Seleccione...</option>
-                            {DOCUMENT_TYPES.map((doc) => (
-                                <option key={doc.value} value={doc.value}>{doc.label}</option>
-                            ))}
-                        </select>
-                    </Box>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setEditDialogOpen(false)}>Cancelar</Button>
-                    <Button onClick={handleEditSubmit} variant="contained" color="primary">
-                        Guardar
-                    </Button>
-                </DialogActions>
-            </Dialog>
+           
         </Container>
     );
 };
 
-export default UserList; 
+export default UserList;

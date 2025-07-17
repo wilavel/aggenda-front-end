@@ -15,9 +15,13 @@ import {
     FormControl,
     InputLabel,
     Select,
-    MenuItem
+    MenuItem,
+    FormGroup,
+    FormControlLabel,
+    Checkbox
 } from '@mui/material';
 
+import useFetchClinics from '../hooks/useFetchClinics';
 const API_URL = process.env.REACT_APP_API_URL;
 
 const USER_GROUPS = [
@@ -40,13 +44,15 @@ const CreateUser = () => {
         phone: '',
         group: '',
         document_number: '',
-        document_type: ''
+        document_type: '',
+        clinics: [] // ids de clínicas seleccionadas
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(true);
     const navigate = useNavigate();
+    const { clinics, loading: loadingClinics, error: errorClinics } = useFetchClinics();
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -74,6 +80,14 @@ const CreateUser = () => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
+        });
+    };
+
+    // Para el selector múltiple de clínicas
+    const handleClinicsChange = (e) => {
+        setFormData({
+            ...formData,
+            clinics: e.target.value
         });
     };
 
@@ -108,7 +122,8 @@ const CreateUser = () => {
                 password: "UnaContraseñaSegura123!",
                 group: formData.group,
                 document_number: formData.document_number,
-                document_type: formData.document_type
+                document_type: formData.document_type,
+                clinics: formData.group === 'Doctors' ? formData.clinics.map(String) : []
             };
 
             // Configurar la petición
@@ -276,6 +291,45 @@ const CreateUser = () => {
                                     </Select>
                                 </FormControl>
                             </Grid>
+                            {formData.group === 'Doctors' && (
+    <Grid item xs={12}>
+        <FormControl component="fieldset" fullWidth required>
+            <label style={{marginBottom: 8, fontWeight: 500}}>Clínicas</label>
+            <FormGroup row>
+                {loadingClinics ? (
+                    <span style={{marginLeft: 8}}>Cargando clínicas...</span>
+                ) : errorClinics ? (
+                    <span style={{marginLeft: 8, color: 'red'}}>Error al cargar clínicas</span>
+                ) : clinics.length === 0 ? (
+                    <span style={{marginLeft: 8}}>No hay clínicas registradas</span>
+                ) : (
+                    clinics.map((clinic) => (
+                        <FormControlLabel
+                            key={clinic.id}
+                            control={
+                                <Checkbox
+                                    checked={formData.clinics.includes(clinic.id)}
+                                    onChange={e => {
+                                        const checked = e.target.checked;
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            clinics: checked
+                                                ? [...prev.clinics, clinic.id]
+                                                : prev.clinics.filter(id => id !== clinic.id)
+                                        }));
+                                    }}
+                                    name={clinic.name}
+                                    color="primary"
+                                />
+                            }
+                            label={clinic.name}
+                        />
+                    ))
+                )}
+            </FormGroup>
+        </FormControl>
+    </Grid>
+)}
                             <Grid item xs={12}>
                                 <TextField
                                     required

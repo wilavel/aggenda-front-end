@@ -39,7 +39,7 @@ const FooterUserForm = () => {
       }
       // Enviar petición
       await axios.post(`${API_URL}/send-json-email`, formData);
-      setSuccess('¡Usuario paciente creado exitosamente!');
+      setSuccess('¡Registro creado exitosamente!');
       setFormData({
         name: '',
         email: '',
