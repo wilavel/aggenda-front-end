@@ -31,7 +31,7 @@ const Login = ({ onLogin }) => {
         try {
             const user = await Auth.currentAuthenticatedUser();
             if (user) {
-                navigate('/users');
+                navigate('/');
             }
         } catch (err) {
             console.log('No hay sesión activa');
@@ -59,7 +59,7 @@ const Login = ({ onLogin }) => {
             }
             
             onLogin(); // Notificar que el usuario ha iniciado sesión
-            navigate('/users');
+            navigate('/');
         } catch (err) {
             console.error('Error de autenticación:', err);
             if (err.code === 'UserNotConfirmedException') {
@@ -112,7 +112,7 @@ const Login = ({ onLogin }) => {
             console.log('Contraseña actualizada:', loggedUser);
             setShowNewPasswordDialog(false);
             onLogin(); // Notificar que el usuario ha iniciado sesión
-            navigate('/users');
+            navigate('/');
         } catch (err) {
             console.error('Error al actualizar contraseña:', err);
             if (err.code === 'InvalidParameterException') {

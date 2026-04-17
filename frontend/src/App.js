@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 import './config/dev';
@@ -10,12 +10,16 @@ import Navigation from './components/Navigation';
 import TokenDisplay from './components/TokenDisplay';
 import HomePage from './components/HomePage';
 import ClientList from './components/ClientList';
+import DoctorAvailability from './components/DoctorAvailability';
+import AppointmentCalendar from './components/AppointmentCalendar';
 import { Box } from '@mui/material';
 import FloatingSocialButtons from './components/FloatingSocialButtons';
 
 const App = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [userGroup, setUserGroup] = useState(null);
+    const [currentUserEmail, setCurrentUserEmail] = useState(null);
 
     useEffect(() => {
         checkAuth();
@@ -23,79 +27,80 @@ const App = () => {
 
     const checkAuth = async () => {
         try {
-            await Auth.currentSession();
+            const session = await Auth.currentSession();
+            const payload = session.getIdToken().decodePayload();
+            const groups = payload['cognito:groups'] || [];
+            setUserGroup(groups[0] || null);
+            setCurrentUserEmail(payload.email || null);
             setIsAuthenticated(true);
-        } catch (error) {
+        } catch {
             setIsAuthenticated(false);
         } finally {
             setIsLoading(false);
         }
     };
 
-    if (isLoading) {
-        return null; // O un componente de loading si prefieres
-    }
+    const handleLogin = async () => {
+        try {
+            const session = await Auth.currentSession();
+            const payload = session.getIdToken().decodePayload();
+            const groups = payload['cognito:groups'] || [];
+            setUserGroup(groups[0] || null);
+            setCurrentUserEmail(payload.email || null);
+        } catch {}
+        setIsAuthenticated(true);
+    };
+
+    if (isLoading) return null;
+
+    const isAdmin = userGroup === 'Administrators';
+    const isManager = userGroup === 'Managers' || isAdmin;
+    const isDoctor = userGroup === 'Doctors';
+    const homeRedirect = isDoctor ? '/appointments' : '/users';
 
     return (
         <Router>
-            {isAuthenticated && <Navigation />
-            }
-            <FloatingSocialButtons />}
+            {isAuthenticated && <Navigation userGroup={userGroup} />}
+            <FloatingSocialButtons />
             <Box sx={{ p: 3 }}>
-            <Routes>
-                    <Route 
-                        path="/" 
-                        element={
-                            isAuthenticated ? 
-                            <Navigate to="/users" replace /> : 
-                            <HomePage />
-                        } 
+                <Routes>
+                    <Route
+                        path="/"
+                        element={isAuthenticated ? <Navigate to={homeRedirect} replace /> : <HomePage />}
                     />
-                    <Route 
-                        path="/login" 
-                        element={
-                            isAuthenticated ? 
-                            <Navigate to="/users" replace /> : 
-                            <Login onLogin={() => setIsAuthenticated(true)} />
-                        } 
+                    <Route
+                        path="/login"
+                        element={isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Login onLogin={handleLogin} />}
                     />
-                    <Route 
-                        path="/create-user" 
-                        element={
-                            isAuthenticated ? 
-                            <CreateUser /> : 
-                            <Navigate to="/login" replace />
-                        } 
+                    <Route
+                        path="/create-user"
+                        element={isAuthenticated && isManager ? <CreateUser /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
                     />
-                    <Route 
-                        path="/users" 
-                        element={
-                            isAuthenticated ? 
-                            <UserList /> : 
-                            <Navigate to="/login" replace />
-                        } 
+                    <Route
+                        path="/users"
+                        element={isAuthenticated && isManager ? <UserList /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
                     />
-                    <Route 
-                        path="/clinics" 
-                        element={
-                            isAuthenticated ? 
-                            <ClinicList /> : 
-                            <Navigate to="/login" replace />
-                        } 
+                    <Route
+                        path="/clinics"
+                        element={isAuthenticated && isManager ? <ClinicList /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
                     />
-                    <Route 
-                        path="/token" 
-                        element={
-                            isAuthenticated ? 
-                            <TokenDisplay /> : 
-                            <Navigate to="/login" replace />
-                        } 
+                    <Route
+                        path="/token"
+                        element={isAuthenticated ? <TokenDisplay /> : <Navigate to="/login" replace />}
+                    />
+                    <Route
+                        path="/doctors/:doctorId/availability"
+                        element={isAuthenticated ? <DoctorAvailability /> : <Navigate to="/login" replace />}
+                    />
+                    <Route
+                        path="/appointments"
+                        element={isAuthenticated ? <AppointmentCalendar userGroup={userGroup} currentUserEmail={currentUserEmail} /> : <Navigate to="/login" replace />}
                     />
                     <Route path="/clientes" element={<ClientList />} />
-            </Routes>
+                </Routes>
             </Box>
         </Router>
     );
 };
 
-export default App; 
+export default App;

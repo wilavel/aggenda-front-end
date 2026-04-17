@@ -25,10 +25,9 @@ import useFetchClinics from '../hooks/useFetchClinics';
 const API_URL = process.env.REACT_APP_API_URL;
 
 const USER_GROUPS = [
-    { value: 'Administrators', label: 'Administrador' },
     { value: 'Doctors', label: 'Doctor' },
     { value: 'Managers', label: 'Gerente' },
-    { value: 'Clients', label: 'Paciente' }
+    { value: 'Patients', label: 'Paciente' }
 ];
 const DOCUMENT_TYPES = [
     { value: 'C.C', label: 'C.C' },

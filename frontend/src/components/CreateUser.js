@@ -18,17 +18,23 @@ import {
     MenuItem,
     FormGroup,
     FormControlLabel,
-    Checkbox
+    Checkbox,
+    IconButton,
+    Tooltip,
+    Chip,
 } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import CheckIcon from '@mui/icons-material/Check';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 
 import useFetchClinics from '../hooks/useFetchClinics';
 const API_URL = process.env.REACT_APP_API_URL;
 
 const USER_GROUPS = [
-    { value: 'Administrators', label: 'Administrador' },
     { value: 'Doctors', label: 'Doctor' },
     { value: 'Managers', label: 'Gerente' },
-    { value: 'Clients', label: 'Paciente' }
+    { value: 'Patients', label: 'Paciente' }
 ];
 
 const DOCUMENT_TYPES = [
@@ -49,6 +55,9 @@ const CreateUser = () => {
     });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [tempPassword, setTempPassword] = useState('');
+    const [emailSent, setEmailSent] = useState(false);
+    const [copied, setCopied] = useState(false);
     const [loading, setLoading] = useState(false);
     const [checkingAuth, setCheckingAuth] = useState(true);
     const navigate = useNavigate();
@@ -116,10 +125,9 @@ const CreateUser = () => {
 
             // Preparar los datos
             const requestData = {
-                email: formData.email,
-                name: formData.name,
+                email: formData.email.trim().toLowerCase(),
+                name: formData.name.trim(),
                 phone: formData.phone || '',
-                password: "UnaContraseñaSegura123!",
                 group: formData.group,
                 document_number: formData.document_number,
                 document_type: formData.document_type,
@@ -144,19 +152,19 @@ const CreateUser = () => {
             const response = await axios(config);
             
             console.log('Respuesta del servidor:', response.data);
-            setSuccess('Usuario creado exitosamente');
+            setSuccess(response.data.message || 'Usuario creado exitosamente.');
+            setTempPassword(response.data.temp_password || '');
+            setEmailSent(response.data.email_sent || false);
+            setCopied(false);
             setFormData({
                 email: '',
                 name: '',
                 phone: '',
                 group: '',
                 document_number: '',
-                document_type: ''
+                document_type: '',
+                clinics: [],
             });
-            
-            setTimeout(() => {
-                navigate('/users');
-            }, 2000);
         } catch (err) {
             console.error('Error detallado:', err);
             console.error('Error completo:', {
@@ -226,10 +234,68 @@ const CreateUser = () => {
                         </Alert>
                     )}
                     {success && (
-                        <Alert severity="success" sx={{ mb: 2 }}>
+                        <Alert
+                            severity={emailSent ? 'success' : 'warning'}
+                            icon={emailSent ? <MarkEmailReadIcon /> : <WarningAmberIcon />}
+                            sx={{ mb: 2 }}
+                        >
                             {success}
                         </Alert>
                     )}
+
+                    {tempPassword && (
+                        <Paper
+                            variant="outlined"
+                            sx={{
+                                mb: 3, p: 2,
+                                borderColor: emailSent ? 'success.light' : 'warning.main',
+                                bgcolor: emailSent ? '#f1f8e9' : '#fff8e1',
+                            }}
+                        >
+                            <Typography variant="body2" fontWeight={600} gutterBottom>
+                                {emailSent
+                                    ? '✅ Contraseña temporal enviada al correo'
+                                    : '⚠️ Correo no enviado — comparte esta contraseña manualmente'}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                                <Box
+                                    sx={{
+                                        flex: 1, fontFamily: 'monospace', fontSize: 20,
+                                        fontWeight: 700, letterSpacing: 3,
+                                        bgcolor: 'background.paper', borderRadius: 1,
+                                        px: 2, py: 1, border: '1px solid', borderColor: 'grey.300',
+                                        userSelect: 'all',
+                                    }}
+                                >
+                                    {tempPassword}
+                                </Box>
+                                <Tooltip title={copied ? 'Copiado' : 'Copiar contraseña'}>
+                                    <IconButton
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(tempPassword);
+                                            setCopied(true);
+                                            setTimeout(() => setCopied(false), 2500);
+                                        }}
+                                        color={copied ? 'success' : 'default'}
+                                    >
+                                        {copied ? <CheckIcon /> : <ContentCopyIcon />}
+                                    </IconButton>
+                                </Tooltip>
+                            </Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                                El usuario deberá cambiar esta contraseña en su primer inicio de sesión.
+                            </Typography>
+                            {!emailSent && (
+                                <Chip
+                                    label="SES en modo sandbox — activa el acceso a producción en AWS para envío automático"
+                                    size="small"
+                                    color="warning"
+                                    sx={{ mt: 1, fontSize: '0.7rem', height: 'auto', py: 0.5, whiteSpace: 'normal' }}
+                                />
+                            )}
+                        </Paper>
+                    )}
+
                     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
                         <Grid container spacing={2}>
                             <Grid item xs={12}>

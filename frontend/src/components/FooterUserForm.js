@@ -9,7 +9,7 @@ const FooterUserForm = () => {
     email: '',
     phone: '',
 
-    group: 'Clients', // Paciente por defecto
+    group: 'Patients', // Paciente por defecto
   });
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -45,7 +45,7 @@ const FooterUserForm = () => {
         email: '',
         phone: '',
 
-        group: 'Clients',
+        group: 'Patients',
       });
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Error al crear usuario');
