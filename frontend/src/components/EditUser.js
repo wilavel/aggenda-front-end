@@ -1,356 +1,253 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
-    Box,
-    Button,
-    TextField,
-    Typography,
-    Container,
-    Paper,
-    Alert,
-    Grid,
-    CircularProgress,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    FormGroup,
-    FormControlLabel,
-    Checkbox
+    Box, Button, TextField, Typography, Alert, Grid, CircularProgress,
+    FormControl, InputLabel, Select, MenuItem, FormGroup, FormControlLabel,
+    Checkbox, Avatar, Divider, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import useFetchClinics from '../hooks/useFetchClinics';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
 const USER_GROUPS = [
-    { value: 'Doctors', label: 'Doctor' },
-    { value: 'Managers', label: 'Gerente' },
-    { value: 'Patients', label: 'Paciente' }
+    { value: 'Doctors',  label: 'Doctor'   },
+    { value: 'Managers', label: 'Gerente'  },
+    { value: 'Patients', label: 'Paciente' },
 ];
+
 const DOCUMENT_TYPES = [
     { value: 'C.C', label: 'C.C' },
     { value: 'T.I', label: 'T.I' },
-    { value: 'C.E', label: 'C.E' }
+    { value: 'C.E', label: 'C.E' },
 ];
 
-const EditUser = ({ id: propId, onClose }) => {
-    const id = propId;
-   
-   
+const initials = (name = '') =>
+    name.trim().split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+
+const EditUser = ({ id, onClose }) => {
     const [formData, setFormData] = useState({
-        name: '',
-        phone: '',
-        group: '',
-        document_number: '',
-        document_type: '',
-        clinics: [] // ids de clínicas seleccionadas
+        name: '', phone: '', group: '', document_number: '', document_type: '', clinics: [],
     });
-    const [email, setEmail] = useState('');
-    const [error, setError] = useState('');
+    const [email, setEmail]     = useState('');
+    const [error, setError]     = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
-    const [checkingAuth, setCheckingAuth] = useState(true);
+    const [fetching, setFetching] = useState(true);
     const navigate = useNavigate();
-   
+    const { clinics: clinicsList, loading: loadingClinics, error: errorClinics } = useFetchClinics();
 
     useEffect(() => {
-        const checkAuthAndLoadUser = async () => {
+        const load = async () => {
             try {
-                console.log('Cargando datos del usuario...' + id);
-                setCheckingAuth(true);
                 const session = await Auth.currentSession();
-                if (!session) {
-                    throw new Error('No hay sesión activa');
-                }
-                // Cargar datos del usuario
-                const token = session.getAccessToken().getJwtToken();
-                const response = await axios.get(`${API_URL}/users/${id}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                const token   = session.getAccessToken().getJwtToken();
+                const res     = await axios.get(`${API_URL}/users/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
-                console.log('Datos del usuario:', response.data);
+                setEmail(res.data.email || '');
                 setFormData({
-                    name: response.data.name || '',
-                    phone: response.data.phone || '',
-                    group: response.data.group || '',
-                    document_number: response.data.document_number || '',
-                    document_type: response.data.document_type || '',
-                    clinics: Array.isArray(response.data.clinics) ? response.data.clinics.map(String) : []
+                    name:            res.data.name            || '',
+                    phone:           res.data.phone           || '',
+                    group:           res.data.group           || '',
+                    document_number: res.data.document_number || '',
+                    document_type:   res.data.document_type   || '',
+                    clinics:         Array.isArray(res.data.clinics) ? res.data.clinics.map(String) : [],
                 });
-                setEmail(response.data.email || '');
-            } catch (err) {
-                console.log('Error al cargar datos del usuario:', err);
-                setError('Por favor, inicie sesión para continuar xxxx');
-                setTimeout(() => {
-                    navigate('/login');
-                }, 2000);
+            } catch {
+                setError('Error al cargar los datos del usuario');
+                setTimeout(() => navigate('/login'), 2000);
             } finally {
-                setCheckingAuth(false);
+                setFetching(false);
             }
         };
-        checkAuthAndLoadUser();
-    }, [navigate, id]);
+        load();
+    }, [id, navigate]);
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-    };
-
-    // Para el selector múltiple de clínicas
-    const handleClinicsChange = (e) => {
-        setFormData({
-            ...formData,
-            clinics: e.target.value
-        });
-    };
-
-    const { clinics: clinicsList, loading: loadingClinics, error: errorClinics } = useFetchClinics();
+    const handleChange = (e) =>
+        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         setSuccess('');
-
         try {
-            // Validar campos requeridos
             if (!formData.name || !formData.group || !formData.document_number || !formData.document_type) {
                 throw new Error('Por favor complete todos los campos requeridos');
             }
-
-            // Obtener el token de la sesión actual
             const session = await Auth.currentSession();
-            const token = session.getAccessToken().getJwtToken();
-
-            // Preparar los datos
-            const requestData = {
-                name: formData.name,
-                phone: formData.phone || '',
-                group: formData.group,
-                document_number: formData.document_number,
-                document_type: formData.document_type,
-                clinics: formData.group === 'Doctors' ? formData.clinics.map(String) : []
-            };
-
-            // PUT para actualizar
-            const response = await axios.put(
+            const token   = session.getAccessToken().getJwtToken();
+            await axios.put(
                 `${API_URL}/users/${id}`,
-                requestData,
                 {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
-                }
+                    name:            formData.name,
+                    phone:           formData.phone || '',
+                    group:           formData.group,
+                    document_number: formData.document_number,
+                    document_type:   formData.document_type,
+                    clinics:         formData.group === 'Doctors' ? formData.clinics.map(String) : [],
+                },
+                { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } }
             );
             setSuccess('Usuario actualizado exitosamente');
             if (onClose) onClose();
         } catch (err) {
-            if (err.message === 'No current user') {
-                setError('Sesión expirada. Por favor, vuelva a iniciar sesión.');
-                setTimeout(() => {
-                    navigate('/login');
-                }, 2000);
-            } else if (err.response) {
-                setError(err.response.data?.message || 'Error al actualizar el usuario');
-            } else {
-                setError(err.message || 'Error al actualizar el usuario');
-            }
+            setError(err.response?.data?.message || err.message || 'Error al actualizar el usuario');
         } finally {
             setLoading(false);
         }
     };
 
-    if (checkingAuth) {
+    if (fetching) {
         return (
-            <Container component="main" maxWidth="md">
-                <Box
-                    sx={{
-                        marginTop: 8,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                    }}
-                >
-                    <CircularProgress />
-                    <Typography variant="h6" sx={{ mt: 2 }}>
-                        Verificando autenticación...
-                    </Typography>
-                </Box>
-            </Container>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8, gap: 2 }}>
+                <CircularProgress />
+                <Typography color="text.secondary">Cargando datos...</Typography>
+            </Box>
         );
     }
 
     return (
-        <Container component="main" maxWidth="md">
-            <Box
-                sx={{
-                    marginTop: 8,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                }}
-            >
-                <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
-                    <Typography component="h1" variant="h5" align="center" gutterBottom>
-                        Editar Usuario
-                    </Typography>
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                            {error}
-                        </Alert>
-                    )}
-                    {success && (
-                        <Alert severity="success" sx={{ mb: 2 }}>
-                            {success}
-                        </Alert>
-                    )}
-                    <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    id="email"
-                                    label="Email"
-                                    name="email"
-                                    value={email}
-                                    disabled
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    required
-                                    fullWidth
-                                    id="name"
-                                    label="Nombre"
-                                    name="name"
-                                    autoComplete="name"
-                                    value={formData.name}
-                                    onChange={handleChange}
-                                    disabled={loading}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <TextField
-                                    fullWidth
-                                    id="phone"
-                                    label="Teléfono"
-                                    name="phone"
-                                    autoComplete="tel"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    disabled={loading}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <FormControl fullWidth required>
-                                    <InputLabel id="group-label">Grupo</InputLabel>
-                                    <Select
-                                        labelId="group-label"
-                                        id="group"
-                                        name="group"
-                                        value={formData.group}
-                                        label="Grupo"
-                                        onChange={handleChange}
-                                        disabled={loading}
-                                    >
-                                        {USER_GROUPS.map((group) => (
-                                            <MenuItem key={group.value} value={group.value}>
-                                                {group.label}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                            {formData.group === 'Doctors' && (
-                                <Grid item xs={12}>
-                                    <FormControl component="fieldset" fullWidth required>
-                                        <label style={{marginBottom: 8, fontWeight: 500}}>Clínicas</label>
-                                        <FormGroup row>
-                                            {loadingClinics ? (
-                                                <span style={{marginLeft: 8}}>Cargando clínicas...</span>
-                                            ) : errorClinics ? (
-                                                <span style={{marginLeft: 8, color: 'red'}}>Error al cargar clínicas</span>
-                                            ) : clinicsList.length === 0 ? (
-                                                <span style={{marginLeft: 8}}>No hay clínicas registradas</span>
-                                            ) : (
-                                                clinicsList.map((clinic) => (
-                                                    <FormControlLabel
-                                                        key={clinic.id}
-                                                        control={
-                                                            <Checkbox
-                                                                checked={formData.clinics.includes(clinic.id)}
-                                                                onChange={e => {
-                                                                    const checked = e.target.checked;
-                                                                    setFormData(prev => ({
-                                                                        ...prev,
-                                                                        clinics: checked
-                                                                            ? [...prev.clinics, clinic.id]
-                                                                            : prev.clinics.filter(id => id !== clinic.id)
-                                                                    }));
-                                                                }}
-                                                                name={clinic.name}
-                                                                color="primary"
-                                                            />
-                                                        }
-                                                        label={clinic.name}
-                                                    />
-                                                ))
-                                            )}
-                                        </FormGroup>
-                                    </FormControl>
-                                </Grid>
-                            )}
-                            <Grid item xs={12}>
-                                <TextField
-                                    required
-                                    fullWidth
-                                    id="document_number"
-                                    label="Número de Documento"
-                                    name="document_number"
-                                    value={formData.document_number}
-                                    onChange={handleChange}
-                                    disabled={loading}
-                                />
-                            </Grid>
-                            <Grid item xs={12}>
-                                <FormControl fullWidth required>
-                                    <InputLabel id="document_type-label">Tipo de Documento</InputLabel>
-                                    <Select
-                                        labelId="document_type-label"
-                                        id="document_type"
-                                        name="document_type"
-                                        value={formData.document_type}
-                                        label="Tipo de Documento"
-                                        onChange={handleChange}
-                                        disabled={loading}
-                                    >
-                                        {DOCUMENT_TYPES.map((doc) => (
-                                            <MenuItem key={doc.value} value={doc.value}>
-                                                {doc.label}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                            </Grid>
-                        </Grid>
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            sx={{ mt: 3, mb: 2 }}
-                            disabled={loading}
-                        >
-                            {loading ? 'Actualizando usuario...' : 'Actualizar Usuario'}
-                        </Button>
+        <>
+            <DialogTitle sx={{ pb: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ width: 44, height: 44, bgcolor: 'primary.main', fontWeight: 700 }}>
+                        {initials(formData.name)}
+                    </Avatar>
+                    <Box>
+                        <Typography variant="h6" fontWeight={700} lineHeight={1.2}>
+                            {formData.name || 'Editar Usuario'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">{email}</Typography>
                     </Box>
-                </Paper>
-            </Box>
-        </Container>
+                </Box>
+                {/* Barra de acento */}
+                <Box sx={{ height: 3, bgcolor: 'primary.main', mt: 2, mx: -3, borderRadius: 0 }} />
+            </DialogTitle>
+
+            <DialogContent sx={{ pt: 3 }}>
+                {error   && <Alert severity="error"   sx={{ mb: 2 }}>{error}</Alert>}
+                {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+
+                <Box component="form" id="edit-user-form" onSubmit={handleSubmit}>
+
+                    {/* ── Información personal ── */}
+                    <Typography variant="overline" color="text.secondary" fontWeight={700} sx={{ letterSpacing: 1 }}>
+                        Información personal
+                    </Typography>
+                    <Grid container spacing={2} sx={{ mt: 0.5, mb: 3 }}>
+                        <Grid item xs={12} sm={6}>
+                            <TextField required fullWidth label="Nombre completo" name="name"
+                                value={formData.name} onChange={handleChange} disabled={loading} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                            <TextField fullWidth label="Teléfono" name="phone" type="tel"
+                                value={formData.phone} onChange={handleChange} disabled={loading} />
+                        </Grid>
+                    </Grid>
+
+                    <Divider sx={{ mb: 3 }} />
+
+                    {/* ── Cuenta ── */}
+                    <Typography variant="overline" color="text.secondary" fontWeight={700} sx={{ letterSpacing: 1 }}>
+                        Cuenta
+                    </Typography>
+                    <Grid container spacing={2} sx={{ mt: 0.5, mb: 3 }}>
+                        <Grid item xs={12} sm={8}>
+                            <TextField fullWidth label="Email" value={email} disabled />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                            <FormControl fullWidth required>
+                                <InputLabel>Rol</InputLabel>
+                                <Select name="group" value={formData.group} label="Rol" onChange={handleChange} disabled={loading}>
+                                    {USER_GROUPS.map(g => (
+                                        <MenuItem key={g.value} value={g.value}>{g.label}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                    </Grid>
+
+                    {formData.group === 'Doctors' && (
+                        <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1, border: '1px solid', borderColor: 'grey.200' }}>
+                            <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                Clínicas asignadas
+                            </Typography>
+                            <FormGroup row sx={{ mt: 1 }}>
+                                {loadingClinics ? (
+                                    <Typography variant="body2" color="text.secondary">Cargando clínicas...</Typography>
+                                ) : errorClinics ? (
+                                    <Typography variant="body2" color="error">Error al cargar clínicas</Typography>
+                                ) : clinicsList.length === 0 ? (
+                                    <Typography variant="body2" color="text.secondary">No hay clínicas registradas</Typography>
+                                ) : clinicsList.map(clinic => (
+                                    <FormControlLabel
+                                        key={clinic.id}
+                                        label={clinic.name}
+                                        control={
+                                            <Checkbox
+                                                size="small"
+                                                checked={formData.clinics.includes(clinic.id)}
+                                                onChange={e => {
+                                                    const checked = e.target.checked;
+                                                    setFormData(prev => ({
+                                                        ...prev,
+                                                        clinics: checked
+                                                            ? [...prev.clinics, clinic.id]
+                                                            : prev.clinics.filter(id => id !== clinic.id),
+                                                    }));
+                                                }}
+                                            />
+                                        }
+                                    />
+                                ))}
+                            </FormGroup>
+                        </Box>
+                    )}
+
+                    <Divider sx={{ mb: 3 }} />
+
+                    {/* ── Documento ── */}
+                    <Typography variant="overline" color="text.secondary" fontWeight={700} sx={{ letterSpacing: 1 }}>
+                        Documento de identidad
+                    </Typography>
+                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                        <Grid item xs={12} sm={4}>
+                            <FormControl fullWidth required>
+                                <InputLabel>Tipo</InputLabel>
+                                <Select name="document_type" value={formData.document_type} label="Tipo" onChange={handleChange} disabled={loading}>
+                                    {DOCUMENT_TYPES.map(d => (
+                                        <MenuItem key={d.value} value={d.value}>{d.label}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+                        <Grid item xs={12} sm={8}>
+                            <TextField required fullWidth label="Número de documento" name="document_number"
+                                value={formData.document_number} onChange={handleChange} disabled={loading} />
+                        </Grid>
+                    </Grid>
+                </Box>
+            </DialogContent>
+
+            <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+                <Button onClick={onClose} disabled={loading} color="inherit">
+                    Cancelar
+                </Button>
+                <Button
+                    type="submit"
+                    form="edit-user-form"
+                    variant="contained"
+                    disabled={loading}
+                    sx={{ px: 4, fontWeight: 700, boxShadow: 'none' }}
+                >
+                    {loading ? 'Guardando...' : 'Guardar cambios'}
+                </Button>
+            </DialogActions>
+        </>
     );
 };
 
-export default EditUser; 
+export default EditUser;

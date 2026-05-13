@@ -285,23 +285,28 @@ const DoctorAvailability = () => {
 
     return (
         <Container maxWidth="md">
-            <Box sx={{ mt: 4, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                <IconButton onClick={() => navigate('/users')}>
-                    <ArrowBackIcon />
+            {/* ── Header ── */}
+            <Box sx={{ mt: 4, mb: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <IconButton
+                    onClick={() => navigate(-1)}
+                    sx={{ bgcolor: 'grey.100', '&:hover': { bgcolor: 'grey.200' } }}
+                >
+                    <ArrowBackIcon fontSize="small" />
                 </IconButton>
                 <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="h5">Disponibilidad</Typography>
+                    <Typography variant="h4" fontWeight={700}>Disponibilidad</Typography>
                     {doctorName && (
-                        <Typography variant="subtitle1" color="text.secondary">
+                        <Typography variant="body2" color="text.secondary">
                             Dr. {doctorName}
                         </Typography>
                     )}
                 </Box>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => {
-                    setCreateForm(EMPTY_CREATE);
-                    setCreateError('');
-                    setCreateOpen(true);
-                }}>
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => { setCreateForm(EMPTY_CREATE); setCreateError(''); setCreateOpen(true); }}
+                    sx={{ borderRadius: 2, px: 3, py: 1.2, fontWeight: 600 }}
+                >
                     Agregar horarios
                 </Button>
             </Box>
@@ -309,58 +314,80 @@ const DoctorAvailability = () => {
             {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
             {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
-                    <CircularProgress />
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mt: 8, gap: 2 }}>
+                    <CircularProgress color="primary" />
+                    <Typography color="text.secondary">Cargando horarios...</Typography>
                 </Box>
             ) : slots.length === 0 ? (
-                <Paper sx={{ p: 4, textAlign: 'center' }}>
-                    <Typography color="text.secondary">No hay horarios configurados. Agrega el primero.</Typography>
+                <Paper variant="outlined" sx={{ p: 6, textAlign: 'center', borderRadius: 2 }}>
+                    <Typography variant="h6" color="text.disabled" gutterBottom>Sin horarios configurados</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Agrega la disponibilidad del doctor usando el botón de arriba.
+                    </Typography>
                 </Paper>
             ) : (
                 slotsByDay.map(day => (
                     <Box key={day.value} sx={{ mb: 3 }}>
-                        <Typography variant="h6" sx={{ mb: 1 }}>{day.label}</Typography>
-                        <TableContainer component={Paper}>
-                            <Table size="small">
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>Clínica</TableCell>
-                                        <TableCell>Inicio</TableCell>
-                                        <TableCell>Fin</TableCell>
-                                        <TableCell>Estado</TableCell>
-                                        <TableCell align="right">Acciones</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {day.slots.map(slot => (
-                                        <TableRow key={slot.slot_id}>
-                                            <TableCell>{clinicName(slot.clinic_id)}</TableCell>
-                                            <TableCell>{slot.start_time}</TableCell>
-                                            <TableCell>{slot.end_time}</TableCell>
-                                            <TableCell>
-                                                <Chip label={slot.is_active ? 'Activo' : 'Inactivo'}
-                                                    color={slot.is_active ? 'success' : 'default'} size="small" />
-                                            </TableCell>
-                                            <TableCell align="right">
-                                                <IconButton size="small" color="primary" onClick={() => openEdit(slot)}>
-                                                    <EditIcon fontSize="small" />
-                                                </IconButton>
-                                                <IconButton size="small" color="error" onClick={() => handleDelete(slot)}>
-                                                    <DeleteIcon fontSize="small" />
-                                                </IconButton>
-                                            </TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                            <Box sx={{ width: 4, height: 20, borderRadius: 2, bgcolor: 'primary.main' }} />
+                            <Typography variant="h6" fontWeight={700} sx={{ fontFamily: '"Outfit",sans-serif' }}>
+                                {day.label}
+                            </Typography>
+                            <Chip label={`${day.slots.length} turno${day.slots.length !== 1 ? 's' : ''}`} size="small" variant="outlined" sx={{ fontSize: '0.7rem' }} />
+                        </Box>
+                        <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                            <TableContainer>
+                                <Table size="small">
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Clínica</TableCell>
+                                            <TableCell>Inicio</TableCell>
+                                            <TableCell>Fin</TableCell>
+                                            <TableCell>Estado</TableCell>
+                                            <TableCell align="right"></TableCell>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
+                                    </TableHead>
+                                    <TableBody>
+                                        {day.slots.map(slot => (
+                                            <TableRow key={slot.slot_id}>
+                                                <TableCell>
+                                                    <Typography variant="body2" fontWeight={500}>{clinicName(slot.clinic_id)}</Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>{slot.start_time}</Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Typography variant="body2" sx={{ fontVariantNumeric: 'tabular-nums' }}>{slot.end_time}</Typography>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Chip
+                                                        label={slot.is_active ? 'Activo' : 'Inactivo'}
+                                                        color={slot.is_active ? 'success' : 'default'}
+                                                        size="small"
+                                                    />
+                                                </TableCell>
+                                                <TableCell align="right">
+                                                    <IconButton size="small" color="primary" onClick={() => openEdit(slot)}>
+                                                        <EditIcon fontSize="small" />
+                                                    </IconButton>
+                                                    <IconButton size="small" color="error" onClick={() => handleDelete(slot)}>
+                                                        <DeleteIcon fontSize="small" />
+                                                    </IconButton>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </Paper>
                     </Box>
                 ))
             )}
 
             {/* ── Create dialog ─────────────────────────────────────────────── */}
             <Dialog open={createOpen} onClose={() => setCreateOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Agregar horarios</DialogTitle>
+                <Box sx={{ height: 4, bgcolor: 'primary.main', borderRadius: '14px 14px 0 0' }} />
+                <DialogTitle sx={{ fontFamily: '"Outfit",sans-serif', fontWeight: 700 }}>Agregar horarios</DialogTitle>
                 <DialogContent>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
                         {createError && <Alert severity="error">{createError}</Alert>}
@@ -519,7 +546,8 @@ const DoctorAvailability = () => {
 
             {/* ── Edit dialog ───────────────────────────────────────────────── */}
             <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="xs" fullWidth>
-                <DialogTitle>Editar horario</DialogTitle>
+                <Box sx={{ height: 4, bgcolor: 'primary.main', borderRadius: '14px 14px 0 0' }} />
+                <DialogTitle sx={{ fontFamily: '"Outfit",sans-serif', fontWeight: 700 }}>Editar horario</DialogTitle>
                 <DialogContent>
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
                         {editError && <Alert severity="error">{editError}</Alert>}
