@@ -10,6 +10,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import SearchIcon from '@mui/icons-material/Search';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import axios from 'axios';
@@ -227,6 +228,13 @@ const UserList = () => {
                                                             </IconButton>
                                                         </Tooltip>
                                                     </>
+                                                )}
+                                                {user.group === 'Patients' && (
+                                                    <Tooltip title="Historia clínica">
+                                                        <IconButton size="small" sx={{ color: 'success.main' }} onClick={() => navigate(`/patients/${user.id}/medical-record`)}>
+                                                            <MedicalServicesIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
                                                 )}
                                                 <Tooltip title="Editar">
                                                     <IconButton

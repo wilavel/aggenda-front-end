@@ -12,6 +12,7 @@ import HomePage from './components/HomePage';
 import ClientList from './components/ClientList';
 import DoctorAvailability from './components/DoctorAvailability';
 import AppointmentCalendar from './components/AppointmentCalendar';
+import MedicalRecord from './components/MedicalRecord';
 import { Box } from '@mui/material';
 import FloatingSocialButtons from './components/FloatingSocialButtons';
 
@@ -95,6 +96,10 @@ const App = () => {
                     <Route
                         path="/appointments"
                         element={isAuthenticated ? <AppointmentCalendar userGroup={userGroup} currentUserEmail={currentUserEmail} /> : <Navigate to="/login" replace />}
+                    />
+                    <Route
+                        path="/patients/:patientId/medical-record"
+                        element={isAuthenticated ? <MedicalRecord userGroup={userGroup} /> : <Navigate to="/login" replace />}
                     />
                     <Route path="/clientes" element={<ClientList />} />
                 </Routes>

@@ -28,7 +28,9 @@ const Navigation = ({ userGroup }) => {
             { to: '/create-user', label: 'Crear Usuario' },
           ]
         : isDoctor
-        ? [{ to: '/appointments', label: 'Mi Agenda' }]
+        ? [
+            { to: '/appointments', label: 'Mi Agenda' },
+          ]
         : [];
 
     return (

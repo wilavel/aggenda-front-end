@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/static/css/main.6d4b4953.css",
-    "main.js": "/static/js/main.661a770a.js",
+    "main.css": "/static/css/main.8e90dc39.css",
+    "main.js": "/static/js/main.bd16dc91.js",
     "static/media/banner-central-dent.png": "/static/media/banner-central-dent.3d86788f049e23365643.png",
     "static/media/logo_footer.png": "/static/media/logo_footer.d8558e3b2c4104d952c7.png",
     "index.html": "/index.html",
-    "main.6d4b4953.css.map": "/static/css/main.6d4b4953.css.map",
-    "main.661a770a.js.map": "/static/js/main.661a770a.js.map"
+    "main.8e90dc39.css.map": "/static/css/main.8e90dc39.css.map",
+    "main.bd16dc91.js.map": "/static/js/main.bd16dc91.js.map"
   },
   "entrypoints": [
-    "static/css/main.6d4b4953.css",
-    "static/js/main.661a770a.js"
+    "static/css/main.8e90dc39.css",
+    "static/js/main.bd16dc91.js"
   ]
 }
