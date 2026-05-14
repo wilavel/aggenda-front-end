@@ -7,7 +7,7 @@ import {
     Paper, Divider, Chip, TextField, Dialog, DialogTitle,
     DialogContent, DialogActions, IconButton, Tooltip, Accordion,
     AccordionSummary, AccordionDetails, List, ListItem, ListItemText,
-    ListItemSecondaryAction, Tab, Tabs,
+    ListItemSecondaryAction, Tab, Tabs, Avatar,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
@@ -37,12 +37,16 @@ const tagChips = (items = [], color = 'default') =>
 
 // ── MedicalRecord component ───────────────────────────────────────────────────
 
+const initials = (name = '') =>
+    name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
+
 const MedicalRecord = ({ patientId: propPatientId, userGroup, readOnly: propReadOnly }) => {
     const { patientId: paramPatientId } = useParams();
     const patientId = propPatientId || paramPatientId;
     const canWrite = WRITE_GROUPS.has(userGroup) && !propReadOnly;
 
     const [tab, setTab] = useState(0);
+    const [patient, setPatient] = useState(null);
     const [record, setRecord] = useState(null);
     const [notes, setNotes] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -71,14 +75,15 @@ const MedicalRecord = ({ patientId: propPatientId, userGroup, readOnly: propRead
         try {
             setLoading(true);
             const token = await getToken();
-            const res = await axios.get(`${API_URL}/patients/${patientId}/medical-record`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setRecord(res.data.medical_record);
-        } catch (err) {
-            if (err.response?.status === 404) {
-                setRecord(null);
-            } else {
+            const headers = { Authorization: `Bearer ${token}` };
+            const [patientRes, recordRes] = await Promise.allSettled([
+                axios.get(`${API_URL}/users/${patientId}`, { headers }),
+                axios.get(`${API_URL}/patients/${patientId}/medical-record`, { headers }),
+            ]);
+            if (patientRes.status === 'fulfilled') setPatient(patientRes.value.data);
+            if (recordRes.status === 'fulfilled') {
+                setRecord(recordRes.value.data.medical_record);
+            } else if (recordRes.reason?.response?.status !== 404) {
                 setError('Error al cargar la historia clínica');
             }
         } finally {
@@ -245,9 +250,29 @@ const MedicalRecord = ({ patientId: propPatientId, userGroup, readOnly: propRead
     return (
         <Container maxWidth="lg">
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 4, mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <MedicalServicesIcon color="primary" />
-                    <Typography variant="h5" fontWeight={700}>Historia Clínica</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ bgcolor: 'success.main', width: 48, height: 48, fontSize: 16, fontWeight: 700 }}>
+                        {initials(patient?.name)}
+                    </Avatar>
+                    <Box>
+                        <Typography variant="h5" fontWeight={700} lineHeight={1.2}>
+                            {patient?.name || '—'}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                            {patient?.document_type && patient?.document_number && (
+                                <Chip
+                                    label={`${patient.document_type} ${patient.document_number}`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ fontSize: '0.75rem', fontWeight: 500 }}
+                                />
+                            )}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <MedicalServicesIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
+                                <Typography variant="caption" color="text.secondary">Historia clínica</Typography>
+                            </Box>
+                        </Box>
+                    </Box>
                 </Box>
                 {canWrite && (
                     <Button variant="contained" startIcon={<EditIcon />} onClick={openRecordDialog}

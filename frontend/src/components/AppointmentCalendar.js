@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 import axios from 'axios';
 import {
@@ -16,8 +16,11 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import PersonIcon from '@mui/icons-material/Person';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import BusinessIcon from '@mui/icons-material/Business';
 import EditIcon from '@mui/icons-material/Edit';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import useFetchClinics from '../hooks/useFetchClinics';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
@@ -47,7 +50,9 @@ const initials = (name = '') =>
 
 const AppointmentCalendar = ({ userGroup, currentUserEmail }) => {
     const [searchParams] = useSearchParams();
-    const doctorIdFromUrl = searchParams.get('doctor');
+    const navigate = useNavigate();
+    const doctorIdFromUrl  = searchParams.get('doctor');
+    const patientIdFromUrl = searchParams.get('patient');
     const isDoctor = userGroup === 'Doctors';
 
     const today = new Date();
@@ -56,8 +61,9 @@ const AppointmentCalendar = ({ userGroup, currentUserEmail }) => {
     );
 
     // step: 'patient' | 'doctor' | 'calendar'
-    // Doctors always start on 'calendar'
-    const [step, setStep] = useState(isDoctor ? 'calendar' : 'patient');
+    const [step, setStep] = useState(
+        isDoctor ? 'calendar' : patientIdFromUrl ? 'doctor' : 'patient'
+    );
 
     const [allPatients, setAllPatients] = useState([]);
     const [allDoctors, setAllDoctors] = useState([]);
@@ -78,10 +84,15 @@ const AppointmentCalendar = ({ userGroup, currentUserEmail }) => {
 
     // confirm-booking dialog
     const [bookDialog, setBookDialog] = useState({ open: false, day: null, slot: null });
+    const [bookPatient, setBookPatient] = useState(null);
+    const [bookPatientInput, setBookPatientInput] = useState('');
     const [bookError, setBookError] = useState('');
     const [saving, setSaving] = useState(false);
 
     const [error, setError] = useState('');
+
+    const { clinics } = useFetchClinics();
+    const clinicMap = Object.fromEntries(clinics.map(c => [String(c.id), c.name || c.id]));
 
     const getToken = async () => {
         const session = await Auth.currentSession();
@@ -105,20 +116,28 @@ const AppointmentCalendar = ({ userGroup, currentUserEmail }) => {
                 setAllDoctors(doctorList);
                 setAllPatients(patientList);
 
-                // Si el usuario es doctor, auto-seleccionarse por email
+                // Doctor: auto-seleccionarse por email
                 if (isDoctor && currentUserEmail) {
                     const self = doctorList.find(
                         d => d.email?.toLowerCase() === currentUserEmail.toLowerCase()
                     );
-                    if (self) {
-                        setSelectedDoctor(self);
-                    }
-                // pre-select doctor if coming from UserList (manager flow)
+                    if (self) setSelectedDoctor(self);
+
+                // Viene de DoctorList con ?doctor=: ir directo al calendario del doctor
                 } else if (doctorIdFromUrl) {
                     const doc = doctorList.find(d => d.id === doctorIdFromUrl);
                     if (doc) {
                         setSelectedDoctor(doc);
                         setStep('calendar');
+                    }
+                }
+
+                // Viene de PatientList con ?patient=: pre-seleccionar paciente e ir a elegir doctor
+                if (patientIdFromUrl) {
+                    const patient = patientList.find(p => p.id === patientIdFromUrl);
+                    if (patient) {
+                        setSelectedPatient(patient);
+                        setStep('doctor');
                     }
                 }
             } catch {
@@ -259,11 +278,14 @@ const AppointmentCalendar = ({ userGroup, currentUserEmail }) => {
     };
 
     const handleOpenBook = (day, slot) => {
+        setBookPatient(selectedPatient);
+        setBookPatientInput(selectedPatient?.name || '');
         setBookDialog({ open: true, day, slot });
         setBookError('');
     };
 
     const handleCreateAppointment = async () => {
+        if (!bookPatient) { setBookError('Selecciona un paciente para continuar.'); return; }
         setSaving(true);
         setBookError('');
         try {
@@ -272,7 +294,7 @@ const AppointmentCalendar = ({ userGroup, currentUserEmail }) => {
                 `${API_URL}/appointments`,
                 {
                     doctor_id: selectedDoctor.id,
-                    patient_id: selectedPatient.id,
+                    patient_id: bookPatient.id,
                     appointment_date: toDateStr(bookDialog.day),
                     start_time: bookDialog.slot.start,
                     clinic_id: bookDialog.slot.clinic_id,
@@ -593,8 +615,8 @@ const AppointmentCalendar = ({ userGroup, currentUserEmail }) => {
                             )}
                         </Box>
 
-                        {/* Botón disponibilidad — solo para doctores */}
-                        {isDoctor && selectedDoctor && (
+                        {/* Botón disponibilidad — managers y el propio doctor */}
+                        {selectedDoctor && (
                             <>
                                 <Divider orientation="vertical" flexItem />
                                 <Button
@@ -650,11 +672,14 @@ const AppointmentCalendar = ({ userGroup, currentUserEmail }) => {
                                     const today_ = isToday(day);
                                     const avail = hasAvailability(day) && !past;
                                     const dayAppts = appointmentsOnDay(day);
+                                    const clinicsOnDay = [...new Set(
+                                        dayAppts.map(a => clinicMap[String(a.clinic_id)] || a.clinic_id).filter(Boolean)
+                                    )];
                                     const tooltipText = past
                                         ? 'Fecha pasada'
                                         : !avail
                                         ? 'Sin disponibilidad'
-                                        : `${dayAppts.length} cita(s) — click para agendar`;
+                                        : `${dayAppts.length} cita(s)${clinicsOnDay.length ? ` · ${clinicsOnDay.join(', ')}` : ''}`;
 
                                     return (
                                         <Tooltip key={day} title={tooltipText} arrow placement="top">
@@ -741,66 +766,78 @@ const AppointmentCalendar = ({ userGroup, currentUserEmail }) => {
                 </DialogTitle>
 
                 <DialogContent dividers>
-                    {/* Patient context */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, p: 1.5, bgcolor: 'primary.50', borderRadius: 1, border: '1px solid', borderColor: 'primary.light' }}>
-                        <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32, fontSize: 12 }}>
-                            {initials(selectedPatient?.name)}
-                        </Avatar>
-                        <Box>
-                            <Typography variant="caption" color="text.secondary">Paciente a agendar</Typography>
-                            <Typography variant="body2" fontWeight={600}>{selectedPatient?.name}</Typography>
-                        </Box>
-                    </Box>
-
                     {daySlots.length === 0 ? (
                         <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
                             No hay turnos configurados para este día.
                         </Typography>
                     ) : (
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            {daySlots.map((slot, i) => (
-                                <Box
-                                    key={i}
-                                    sx={{
-                                        display: 'flex', alignItems: 'center', p: 1.25, borderRadius: 1,
-                                        border: '1px solid',
-                                        borderColor: slot.booked ? 'warning.light' : 'success.light',
-                                        bgcolor: slot.booked ? '#fff8e1' : '#f1f8e9',
-                                    }}
-                                >
-                                    <Typography variant="body2" fontWeight={600} sx={{ minWidth: 110 }}>
-                                        {slot.start} – {slot.end}
-                                    </Typography>
+                            {daySlots.map((slot, i) => {
+                                const clinicName = clinicMap[String(slot.clinic_id)] || slot.clinic_id || '—';
+                                return (
+                                    <Box
+                                        key={i}
+                                        sx={{
+                                            p: 1.25, borderRadius: 1,
+                                            border: '1px solid',
+                                            borderColor: slot.booked ? 'warning.light' : 'success.light',
+                                            bgcolor: slot.booked ? '#fff8e1' : '#f1f8e9',
+                                        }}
+                                    >
+                                        {/* Fila superior: hora + clínica */}
+                                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                                            <Typography variant="body2" fontWeight={600} sx={{ minWidth: 110 }}>
+                                                {slot.start} – {slot.end}
+                                            </Typography>
+                                            <Chip
+                                                icon={<BusinessIcon sx={{ fontSize: '0.75rem !important' }} />}
+                                                label={clinicName}
+                                                size="small"
+                                                variant="outlined"
+                                                sx={{ fontSize: '0.65rem', height: 20, ml: 1 }}
+                                            />
+                                        </Box>
 
-                                    {slot.booked ? (
-                                        <>
-                                            <Typography variant="body2" color="text.secondary" sx={{ flex: 1, ml: 1 }} noWrap>
-                                                {slot.patient?.name || 'Paciente'}
-                                            </Typography>
-                                            <Chip label="Reservado" size="small" color="warning" sx={{ mr: 1, fontSize: '0.65rem' }} />
-                                            <IconButton size="small" color="error" title="Cancelar cita"
-                                                onClick={() => handleCancelAppointment(slot.appointment.id)}>
-                                                <CancelIcon fontSize="small" />
-                                            </IconButton>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Typography variant="body2" color="success.dark" sx={{ flex: 1, ml: 1 }}>
-                                                Disponible
-                                            </Typography>
-                                            {!isDoctor && (
-                                                <Button
-                                                    size="small" variant="contained" color="success"
-                                                    startIcon={<AddIcon />}
-                                                    onClick={() => handleOpenBook(dayDialog.day, slot)}
-                                                >
-                                                    Agendar
-                                                </Button>
+                                        {/* Fila inferior: paciente / estado + acciones */}
+                                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                            {slot.booked ? (
+                                                <>
+                                                    <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }} noWrap>
+                                                        {slot.patient?.name || 'Paciente'}
+                                                    </Typography>
+                                                    <Chip label="Reservado" size="small" color="warning" sx={{ mr: 1, fontSize: '0.65rem' }} />
+                                                    <Tooltip title="Historia clínica">
+                                                        <IconButton
+                                                            size="small"
+                                                            sx={{ color: 'info.main' }}
+                                                            onClick={() => navigate(`/patients/${slot.appointment.patient_id}/medical-record`)}
+                                                        >
+                                                            <MedicalServicesIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <IconButton size="small" color="error" title="Cancelar cita"
+                                                        onClick={() => handleCancelAppointment(slot.appointment.id)}>
+                                                        <CancelIcon fontSize="small" />
+                                                    </IconButton>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Typography variant="body2" color="success.dark" sx={{ flex: 1 }}>
+                                                        Disponible
+                                                    </Typography>
+                                                    <Button
+                                                        size="small" variant="contained" color="success"
+                                                        startIcon={<AddIcon />}
+                                                        onClick={() => handleOpenBook(dayDialog.day, slot)}
+                                                    >
+                                                        Agendar
+                                                    </Button>
+                                                </>
                                             )}
-                                        </>
-                                    )}
-                                </Box>
-                            ))}
+                                        </Box>
+                                    </Box>
+                                );
+                            })}
                         </Box>
                     )}
                 </DialogContent>
@@ -817,10 +854,38 @@ const AppointmentCalendar = ({ userGroup, currentUserEmail }) => {
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
                         {bookError && <Alert severity="error">{bookError}</Alert>}
 
+                        {/* Patient selector — visible when no patient was pre-selected */}
+                        <Autocomplete
+                            options={allPatients}
+                            getOptionLabel={(p) => p.name || ''}
+                            filterOptions={(opts, { inputValue }) => {
+                                const q = inputValue.toLowerCase();
+                                return opts.filter(p =>
+                                    p.name?.toLowerCase().includes(q) ||
+                                    p.document_number?.includes(q) ||
+                                    p.email?.toLowerCase().includes(q)
+                                );
+                            }}
+                            value={bookPatient}
+                            inputValue={bookPatientInput}
+                            onInputChange={(_, v) => setBookPatientInput(v)}
+                            onChange={(_, v) => setBookPatient(v)}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Paciente *"
+                                    placeholder="Buscar paciente..."
+                                    size="small"
+                                    error={!!bookError && !bookPatient}
+                                />
+                            )}
+                            noOptionsText="No se encontró ningún paciente"
+                        />
+
                         <Paper variant="outlined" sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                             {[
-                                ['Paciente', selectedPatient?.name],
                                 ['Doctor', `Dr. ${selectedDoctor?.name}`],
+                                ['Clínica', bookDialog.slot ? (clinicMap[String(bookDialog.slot.clinic_id)] || bookDialog.slot.clinic_id || '—') : '—'],
                                 ['Fecha', bookDialog.day ? `${String(bookDialog.day).padStart(2, '0')}/${String(month + 1).padStart(2, '0')}/${year}` : ''],
                                 ['Horario', bookDialog.slot ? `${bookDialog.slot.start} – ${bookDialog.slot.end} (${APPOINTMENT_DURATION} min)` : ''],
                             ].map(([label, value]) => (
@@ -836,7 +901,7 @@ const AppointmentCalendar = ({ userGroup, currentUserEmail }) => {
                     <Button onClick={() => setBookDialog({ open: false, day: null, slot: null })} disabled={saving}>
                         Cancelar
                     </Button>
-                    <Button onClick={handleCreateAppointment} variant="contained" disabled={saving}>
+                    <Button onClick={handleCreateAppointment} variant="contained" disabled={saving || !bookPatient}>
                         {saving ? 'Guardando...' : 'Confirmar cita'}
                     </Button>
                 </DialogActions>

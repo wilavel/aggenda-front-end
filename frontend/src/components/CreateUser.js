@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import {
     Box, Button, TextField, Typography, Container, Paper, Alert,
@@ -12,11 +12,12 @@ import useFetchClinics from '../hooks/useFetchClinics';
 
 const API_URL = process.env.REACT_APP_API_URL;
 
-const USER_GROUPS = [
+const ALL_GROUPS = [
     { value: 'Doctors',  label: 'Doctor'   },
     { value: 'Managers', label: 'Gerente'  },
     { value: 'Patients', label: 'Paciente' },
 ];
+const MANAGER_GROUPS = ALL_GROUPS.filter(g => g.value !== 'Managers');
 
 const DOCUMENT_TYPES = [
     { value: 'C.C', label: 'C.C' },
@@ -27,9 +28,17 @@ const DOCUMENT_TYPES = [
 const initials = (name = '') =>
     name.trim().split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
 
-const CreateUser = () => {
+const GROUP_REDIRECT = { Doctors: '/medicos', Patients: '/pacientes' };
+
+const CreateUser = ({ userGroup }) => {
+    const isAdmin = userGroup === 'Administrators';
+    const availableGroups = isAdmin ? ALL_GROUPS : MANAGER_GROUPS;
+
+    const [searchParams] = useSearchParams();
+    const defaultGroup = searchParams.get('group') || '';
+
     const [formData, setFormData] = useState({
-        email: '', name: '', phone: '', group: '',
+        email: '', name: '', phone: '', group: defaultGroup,
         document_number: '', document_type: '', clinics: [],
     });
     const [error, setError]     = useState('');
@@ -86,8 +95,9 @@ const CreateUser = () => {
                 },
             });
             setSuccess('Usuario creado exitosamente. Se envió la contraseña temporal al correo registrado.');
-            setFormData({ email: '', name: '', phone: '', group: '', document_number: '', document_type: '', clinics: [] });
-            setTimeout(() => navigate('/users'), 2000);
+            setFormData({ email: '', name: '', phone: '', group: defaultGroup, document_number: '', document_type: '', clinics: [] });
+            const redirect = GROUP_REDIRECT[formData.group] || '/medicos';
+            setTimeout(() => navigate(redirect), 2000);
         } catch (err) {
             if (err.response) {
                 setError(err.response.data?.message || 'Error al crear el usuario');
@@ -165,7 +175,7 @@ const CreateUser = () => {
                             <FormControl fullWidth required>
                                 <InputLabel>Rol</InputLabel>
                                 <Select name="group" value={formData.group} label="Rol" onChange={handleChange} disabled={loading}>
-                                    {USER_GROUPS.map(g => (
+                                    {availableGroups.map(g => (
                                         <MenuItem key={g.value} value={g.value}>{g.label}</MenuItem>
                                     ))}
                                 </Select>

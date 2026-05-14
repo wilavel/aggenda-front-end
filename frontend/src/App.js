@@ -5,6 +5,10 @@ import './config/dev';
 import Login from './components/Login';
 import CreateUser from './components/CreateUser';
 import UserList from './components/UserList';
+import DoctorList from './components/DoctorList';
+import PatientList from './components/PatientList';
+import PatientAppointments from './components/PatientAppointments';
+
 import ClinicList from './components/ClinicList';
 import Navigation from './components/Navigation';
 import TokenDisplay from './components/TokenDisplay';
@@ -54,10 +58,10 @@ const App = () => {
 
     if (isLoading) return null;
 
-    const isAdmin = userGroup === 'Administrators';
+    const isAdmin   = userGroup === 'Administrators';
     const isManager = userGroup === 'Managers' || isAdmin;
-    const isDoctor = userGroup === 'Doctors';
-    const homeRedirect = isDoctor ? '/appointments' : '/users';
+    const isDoctor  = userGroup === 'Doctors';
+    const homeRedirect = isDoctor ? '/appointments' : '/medicos';
 
     return (
         <Router>
@@ -75,27 +79,39 @@ const App = () => {
                     />
                     <Route
                         path="/create-user"
-                        element={isAuthenticated && isManager ? <CreateUser /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
+                        element={isAuthenticated && isManager ? <CreateUser userGroup={userGroup} /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
                     />
                     <Route
                         path="/users"
-                        element={isAuthenticated && isManager ? <UserList /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
+                        element={isAuthenticated && isAdmin ? <UserList userGroup={userGroup} /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
+                    />
+                    <Route
+                        path="/medicos"
+                        element={isAuthenticated && isManager ? <DoctorList userGroup={userGroup} /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
+                    />
+                    <Route
+                        path="/pacientes"
+                        element={isAuthenticated && (isManager || isDoctor) ? <PatientList userGroup={userGroup} /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
                     />
                     <Route
                         path="/clinics"
-                        element={isAuthenticated && isManager ? <ClinicList /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
+                        element={isAuthenticated && isAdmin ? <ClinicList /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
+                    />
+                    <Route
+                        path="/doctors/:doctorId/availability"
+                        element={isAuthenticated && (isManager || isDoctor) ? <DoctorAvailability /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
                     />
                     <Route
                         path="/token"
                         element={isAuthenticated ? <TokenDisplay /> : <Navigate to="/login" replace />}
                     />
                     <Route
-                        path="/doctors/:doctorId/availability"
-                        element={isAuthenticated ? <DoctorAvailability /> : <Navigate to="/login" replace />}
-                    />
-                    <Route
                         path="/appointments"
                         element={isAuthenticated ? <AppointmentCalendar userGroup={userGroup} currentUserEmail={currentUserEmail} /> : <Navigate to="/login" replace />}
+                    />
+                    <Route
+                        path="/patients/:patientId/appointments"
+                        element={isAuthenticated && isManager ? <PatientAppointments /> : isAuthenticated ? <Navigate to={homeRedirect} replace /> : <Navigate to="/login" replace />}
                     />
                     <Route
                         path="/patients/:patientId/medical-record"

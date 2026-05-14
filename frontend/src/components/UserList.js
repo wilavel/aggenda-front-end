@@ -28,7 +28,8 @@ const GROUP_LABELS = {
 const initials = (name = '') =>
     name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
 
-const UserList = () => {
+const UserList = ({ userGroup }) => {
+    const isAdmin = userGroup === 'Administrators';
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -236,19 +237,23 @@ const UserList = () => {
                                                         </IconButton>
                                                     </Tooltip>
                                                 )}
-                                                <Tooltip title="Editar">
-                                                    <IconButton
-                                                        size="small"
-                                                        onClick={() => { setSelectedUser(user); setEditDialogOpen(true); }}
-                                                    >
-                                                        <EditIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                                <Tooltip title="Eliminar">
-                                                    <IconButton size="small" color="error" onClick={() => handleDeleteClick(user.id)}>
-                                                        <DeleteIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
+                                                {isAdmin && (
+                                                    <>
+                                                        <Tooltip title="Editar">
+                                                            <IconButton
+                                                                size="small"
+                                                                onClick={() => { setSelectedUser(user); setEditDialogOpen(true); }}
+                                                            >
+                                                                <EditIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                        <Tooltip title="Eliminar">
+                                                            <IconButton size="small" color="error" onClick={() => handleDeleteClick(user.id)}>
+                                                                <DeleteIcon fontSize="small" />
+                                                            </IconButton>
+                                                        </Tooltip>
+                                                    </>
+                                                )}
                                             </Box>
                                         </TableCell>
                                     </TableRow>

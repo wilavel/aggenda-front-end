@@ -22,14 +22,14 @@ const Navigation = ({ userGroup }) => {
 
     const navLinks = isManager
         ? [
-            { to: '/users',       label: 'Usuarios'      },
-            { to: '/clinics',     label: 'Clínicas'      },
-            { to: '/appointments',label: 'Agenda'         },
-            { to: '/create-user', label: 'Crear Usuario' },
+            { to: '/medicos',      label: 'Doctores'  },
+            { to: '/pacientes',    label: 'Pacientes' },
+            { to: '/appointments', label: 'Agenda'    },
           ]
         : isDoctor
         ? [
-            { to: '/appointments', label: 'Mi Agenda' },
+            { to: '/appointments', label: 'Mi Agenda'  },
+            { to: '/pacientes',    label: 'Pacientes'  },
           ]
         : [];
 

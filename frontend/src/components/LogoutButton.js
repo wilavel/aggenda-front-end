@@ -27,13 +27,21 @@ const LogoutButton = () => {
 
     return (
         <Button
-            variant="outlined"
-            color="error"
+            variant="text"
             startIcon={<LogoutIcon />}
             onClick={handleLogout}
-            sx={{ ml: 2 }}
+            sx={{
+                ml: 1,
+                color: 'rgba(255,255,255,0.75)',
+                fontWeight: 500,
+                fontSize: '0.85rem',
+                '&:hover': {
+                    bgcolor: 'rgba(255,255,255,0.1)',
+                    color: '#fff',
+                },
+            }}
         >
-            Cerrar Sesión
+            Salir
         </Button>
     );
 };
